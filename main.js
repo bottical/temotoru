@@ -1,4 +1,4 @@
-// main.js
+// public/main.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
 import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
@@ -8,8 +8,7 @@ const firebaseConfig = {
   projectId: "temotoru-neo",
   storageBucket: "temotoru-neo.appspot.com",
   messagingSenderId: "126027037708",
-  appId: "1:126027037708:web:c82bc8037b53fcfa62c229"
-};
+  appId: "1:126027037708:web:c82bc8037b53fcfa62c229"};
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
@@ -17,6 +16,7 @@ const db = getFirestore(app);
 document.getElementById('barcodeForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const barcode = document.getElementById('barcodeInput').value;
+  console.log("Barcode input:", barcode); // デバッグログ
   const user = barcode.slice(-5);
   const cameraId = generateCameraId(user);
   const url = generateCameraUrl(cameraId, new Date());
@@ -30,10 +30,10 @@ document.getElementById('barcodeForm').addEventListener('submit', async (e) => {
       cameraId: cameraId,
       url: url
     });
-    console.log("Document written with ID: ", docRef.id);
+    console.log("Document written with ID: ", docRef.id); // デバッグログ
     document.getElementById('barcodeInput').value = '';
   } catch (e) {
-    console.error("Error adding document: ", e);
+    console.error("Error adding document: ", e); // エラーログ
   }
 });
 
