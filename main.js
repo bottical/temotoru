@@ -8,7 +8,8 @@ const firebaseConfig = {
   projectId: "temotoru-neo",
   storageBucket: "temotoru-neo.appspot.com",
   messagingSenderId: "126027037708",
-  appId: "1:126027037708:web:c82bc8037b53fcfa62c229"};
+  appId: "1:126027037708:web:c82bc8037b53fcfa62c229"
+};
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
