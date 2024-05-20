@@ -1,6 +1,6 @@
 // public/main.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-import { getFirestore, collection, addDoc, serverTimestamp, doc, runTransaction } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, serverTimestamp, doc, runTransaction, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyA65o0WMcpDIfwttoaXAmDU5Rqe72h9gPo",
@@ -76,3 +76,49 @@ function generateCameraId(user) {
 function generateCameraUrl(cameraId, time) {
   return `https://camera.example.com/${cameraId}/${time.getTime()}`;
 }
+
+document.getElementById('searchForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  const barcode = document.getElementById('searchBarcode').value;
+  const serialNumber = document.getElementById('searchSerialNumber').value;
+  const user = document.getElementById('searchUser').value;
+  const cameraId = document.getElementById('searchCameraId').value;
+
+  const barcodeDataRef = collection(db, "barcodeData");
+  let q = query(barcodeDataRef);
+
+  if (barcode) {
+    q = query(q, where("code", "==", barcode));
+  }
+  if (serialNumber) {
+    q = query(q, where("serialNumber", "==", parseInt(serialNumber)));
+  }
+  if (user) {
+    q = query(q, where("user", "==", user));
+  }
+  if (cameraId) {
+    q = query(q, where("cameraId", "==", cameraId));
+  }
+
+  try {
+    const querySnapshot = await getDocs(q);
+    const results = document.getElementById('searchResults');
+    results.innerHTML = '';
+
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      const listItem = document.createElement('li');
+      listItem.textContent = `Barcode: ${data.code}, Serial Number: ${data.serialNumber}, User: ${data.user}, Camera ID: ${data.cameraId}, URL: ${data.url}`;
+      results.appendChild(listItem);
+    });
+
+    if (querySnapshot.empty) {
+      const listItem = document.createElement('li');
+      listItem.textContent = 'No results found';
+      results.appendChild(listItem);
+    }
+  } catch (e) {
+    console.error("Error searching documents: ", e);
+  }
+});
