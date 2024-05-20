@@ -42,13 +42,11 @@ async function getNextSequence() {
 document.getElementById('barcodeForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const barcode = document.getElementById('barcodeInput').value;
-  const timeOffset = parseInt(document.getElementById('timeOffset').value, 10);
   console.log("Barcode input:", barcode); // デバッグログ
   const user = barcode.slice(-5);
   const currentTime = new Date();
-  const offsetTime = new Date(currentTime.getTime() - timeOffset * 1000);
   const cameraId = generateCameraId(user);
-  const url = generateCameraUrl(cameraId, offsetTime);
+  const url = generateCameraUrl(cameraId, currentTime);
 
   try {
     const serialNumber = await getNextSequence();
@@ -66,7 +64,6 @@ document.getElementById('barcodeForm').addEventListener('submit', async (e) => {
     });
     console.log("Document written with ID: ", docRef.id); // デバッグログ
     document.getElementById('barcodeInput').value = '';
-    document.getElementById('timeOffset').value = '';
   } catch (e) {
     console.error("Error adding document: ", e); // エラーログ
   }
