@@ -76,8 +76,10 @@ function generateCameraId(user) {
   return `camera_${user}`;
 }
 
-function generateCameraUrl(time) {
-  return `https://safie.link/app/streaming/iZYyecNHIzoUqxiCYUOw/${time.getTime()}`;
+function generateCameraUrl(cameraId, time) {
+  const baseUrl = "https://safie.link/app/streaming/iZYyecNHIzoUqxiCYUOw";
+  const timestamp = time.getTime(); // タイムスタンプをミリ秒形式に変換
+  return `${baseUrl}/${timestamp}`;
 }
 
 document.getElementById('searchForm').addEventListener('submit', async (e) => {
@@ -115,7 +117,7 @@ document.getElementById('searchForm').addEventListener('submit', async (e) => {
       const offsetTime = new Date(data.time.toMillis() - viewTimeOffset * 1000);
       const url = generateCameraUrl(data.cameraId, offsetTime);
       const listItem = document.createElement('li');
-      listItem.textContent = `Barcode: ${data.code}, Serial Number: ${data.serialNumber}, User: ${data.user}, Camera ID: ${data.cameraId}, URL: ${url}`;
+      listItem.innerHTML = `Barcode: ${data.code}, Serial Number: ${data.serialNumber}, User: ${data.user}, Camera ID: ${data.cameraId}, <a href="${url}" target="_blank">URL</a>`;
       results.appendChild(listItem);
     });
 
