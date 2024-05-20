@@ -1,6 +1,6 @@
 // public/main.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-import { getFirestore, collection, addDoc, serverTimestamp, doc, runTransaction, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, serverTimestamp, doc, runTransaction, query, where, getDocs, startAt, endAt } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyA65o0WMcpDIfwttoaXAmDU5Rqe72h9gPo",
@@ -78,8 +78,7 @@ function generateCameraUrl(cameraId, time) {
 }
 
 document.getElementById('searchForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-
+  e.prevent防
   const barcode = document.getElementById('searchBarcode').value;
   const serialNumber = document.getElementById('searchSerialNumber').value;
   const user = document.getElementById('searchUser').value;
@@ -89,16 +88,16 @@ document.getElementById('searchForm').addEventListener('submit', async (e) => {
   let q = query(barcodeDataRef);
 
   if (barcode) {
-    q = query(q, where("code", "==", barcode));
+    q = query(q, where("code", ">=", barcode), where("code", "<=", barcode + "\uf8ff"));
   }
   if (serialNumber) {
     q = query(q, where("serialNumber", "==", parseInt(serialNumber)));
   }
   if (user) {
-    q = query(q, where("user", "==", user));
+    q = query(q, where("user", ">=", user), where("user", "<=", user + "\uf8ff"));
   }
   if (cameraId) {
-    q = query(q, where("cameraId", "==", cameraId));
+    q = query(q, where("cameraId", ">=", cameraId), where("cameraId", "<=", cameraId + "\uf8ff"));
   }
 
   try {
