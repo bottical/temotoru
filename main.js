@@ -87,7 +87,7 @@ document.getElementById('searchForm').addEventListener('submit', async (e) => {
   const serialNumber = document.getElementById('searchSerialNumber').value;
   const user = document.getElementById('searchUser').value;
   const cameraId = document.getElementById('searchCameraId').value;
-  const viewTimeOffset = parseInt(document.getElementById('viewTimeOffset').value, 10);
+  const viewTimeOffset = parseInt(document.getElementById('viewTimeOffset').value, 10) || 0;
 
   const barcodeDataRef = collection(db, "barcodeData");
   let q = query(barcodeDataRef);
