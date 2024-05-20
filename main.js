@@ -14,6 +14,31 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+async function getNextSequence() {
+  const counterDocRef = doc(db, "counters", "barcodeCounter");
+
+  try {
+    const nextId = await runTransaction(db, async (transaction) => {
+      const counterDoc = await transaction.get(counterDocRef);
+      if (!counterDoc.exists()) {
+        throw "Document does not exist!";
+      }
+
+      const currentValue = counterDoc.data().currentValue;
+      const nextValue = currentValue + 1;
+
+      transaction.update(counterDocRef, { currentValue: nextValue });
+      return nextValue;
+    });
+
+    console.log("Next sequence ID: ", nextId);
+    return nextId;
+  } catch (e) {
+    console.error("Transaction failed: ", e);
+    return null;
+  }
+}
+
 document.getElementById('barcodeForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const barcode = document.getElementById('barcodeInput').value;
@@ -23,9 +48,15 @@ document.getElementById('barcodeForm').addEventListener('submit', async (e) => {
   const url = generateCameraUrl(cameraId, new Date());
 
   try {
+    const serialNumber = await getNextSequence();
+    if (serialNumber === null) {
+      console.error("Failed to get the next sequence ID.");
+      return;
+    }
+
     const docRef = await addDoc(collection(db, "barcodeData"), {
       code: barcode,
-      id: Math.floor(Math.random() * 1000000), // 任意の固有番号を生成
+      serialNumber: serialNumber, // 連番フィールド
       time: serverTimestamp(),
       user: user,
       cameraId: cameraId,
