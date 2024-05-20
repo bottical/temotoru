@@ -1,6 +1,6 @@
 // public/main.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-import { getFirestore, collection, addDoc, serverTimestamp, doc, runTransaction, query, where, getDocs, startAt, endAt } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, serverTimestamp, doc, runTransaction, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyA65o0WMcpDIfwttoaXAmDU5Rqe72h9gPo",
@@ -42,10 +42,13 @@ async function getNextSequence() {
 document.getElementById('barcodeForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const barcode = document.getElementById('barcodeInput').value;
+  const timeOffset = parseInt(document.getElementById('timeOffset').value, 10);
   console.log("Barcode input:", barcode); // デバッグログ
   const user = barcode.slice(-5);
+  const currentTime = new Date();
+  const offsetTime = new Date(currentTime.getTime() - timeOffset * 1000);
   const cameraId = generateCameraId(user);
-  const url = generateCameraUrl(cameraId, new Date());
+  const url = generateCameraUrl(cameraId, offsetTime);
 
   try {
     const serialNumber = await getNextSequence();
@@ -59,11 +62,11 @@ document.getElementById('barcodeForm').addEventListener('submit', async (e) => {
       serialNumber: serialNumber, // 連番フィールド
       time: serverTimestamp(),
       user: user,
-      cameraId: cameraId,
-      url: url
+      cameraId: cameraId
     });
     console.log("Document written with ID: ", docRef.id); // デバッグログ
     document.getElementById('barcodeInput').value = '';
+    document.getElementById('timeOffset').value = '';
   } catch (e) {
     console.error("Error adding document: ", e); // エラーログ
   }
@@ -84,6 +87,7 @@ document.getElementById('searchForm').addEventListener('submit', async (e) => {
   const serialNumber = document.getElementById('searchSerialNumber').value;
   const user = document.getElementById('searchUser').value;
   const cameraId = document.getElementById('searchCameraId').value;
+  const viewTimeOffset = parseInt(document.getElementById('viewTimeOffset').value, 10);
 
   const barcodeDataRef = collection(db, "barcodeData");
   let q = query(barcodeDataRef);
@@ -108,8 +112,10 @@ document.getElementById('searchForm').addEventListener('submit', async (e) => {
 
     querySnapshot.forEach((doc) => {
       const data = doc.data();
+      const offsetTime = new Date(data.time.toMillis() - viewTimeOffset * 1000);
+      const url = generateCameraUrl(data.cameraId, offsetTime);
       const listItem = document.createElement('li');
-      listItem.textContent = `Barcode: ${data.code}, Serial Number: ${data.serialNumber}, User: ${data.user}, Camera ID: ${data.cameraId}, URL: ${data.url}`;
+      listItem.textContent = `Barcode: ${data.code}, Serial Number: ${data.serialNumber}, User: ${data.user}, Camera ID: ${data.cameraId}, URL: ${url}`;
       results.appendChild(listItem);
     });
 
