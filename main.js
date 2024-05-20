@@ -77,7 +77,7 @@ function generateCameraId(user) {
 }
 
 function generateCameraUrl(cameraId, time) {
-  const baseUrl = "https://safie.link/app/streaming/iZYyecNHIzoUqxiCYUOw";
+  const baseUrl = "https://safie.link/app/streaming/iZYyecNHIzoUqxiCYUOw?timestamp=";
   const timestamp = time.getTime(); // タイムスタンプをミリ秒形式に変換
   return `${baseUrl}/${timestamp}`;
 }
