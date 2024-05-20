@@ -82,6 +82,16 @@ function generateCameraUrl(cameraId, time) {
   return `${baseUrl}${timestamp}`;
 }
 
+function formatTimestamp(time) {
+  const year = time.getFullYear();
+  const month = String(time.getMonth() + 1).padStart(2, '0');
+  const day = String(time.getDate()).padStart(2, '0');
+  const hours = String(time.getHours()).padStart(2, '0');
+  const minutes = String(time.getMinutes()).padStart(2, '0');
+  const seconds = String(time.getSeconds()).padStart(2, '0');
+  return `${year}年${month}月${day}日${hours}:${minutes}:${seconds}`;
+}
+
 document.getElementById('searchForm').addEventListener('submit', async (e) => {
   e.preventDefault();
 
@@ -116,8 +126,9 @@ document.getElementById('searchForm').addEventListener('submit', async (e) => {
       const data = doc.data();
       const offsetTime = new Date(data.time.toMillis() - viewTimeOffset * 1000);
       const url = generateCameraUrl(data.cameraId, offsetTime);
+      const formattedTimestamp = formatTimestamp(offsetTime);
       const listItem = document.createElement('li');
-      listItem.innerHTML = `Barcode: ${data.code}, Serial Number: ${data.serialNumber}, User: ${data.user}, Camera ID: ${data.cameraId}, <a href="${url}" target="_blank">URL</a>`;
+      listItem.innerHTML = `Barcode: ${data.code}, Serial Number: ${data.serialNumber}, User: ${data.user}, Camera ID: ${data.cameraId}, ${formattedTimestamp} <a href="${url}" target="_blank">URL</a>`;
       results.appendChild(listItem);
     });
 
