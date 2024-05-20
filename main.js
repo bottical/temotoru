@@ -76,8 +76,8 @@ function generateCameraId(user) {
   return `camera_${user}`;
 }
 
-function generateCameraUrl(cameraId, time) {
-  return `https://camera.example.com/${cameraId}/${time.getTime()}`;
+function generateCameraUrl(time) {
+  return `https://safie.link/app/streaming/iZYyecNHIzoUqxiCYUOw/${time.getTime()}`;
 }
 
 document.getElementById('searchForm').addEventListener('submit', async (e) => {
