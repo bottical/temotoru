@@ -1,6 +1,6 @@
 // public/main.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-import { getFirestore, collection, addDoc, serverTimestamp, doc, runTransaction, query, where, getDocs, orderBy } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, serverTimestamp, doc, runTransaction, query, where, getDocs, getDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
 
 const firebaseConfig = {
@@ -39,6 +39,19 @@ async function getNextSequence(userId) {
   } catch (e) {
     console.error("Transaction failed: ", e);
     return null;
+  }
+}
+
+async function getCameraId(userId, user) {
+  const cameraMappingRef = collection(db, `users/${userId}/cameraMapping`);
+  const q = query(cameraMappingRef, where("user", "==", user));
+  const querySnapshot = await getDocs(q);
+  
+  if (!querySnapshot.empty) {
+    const cameraMapping = querySnapshot.docs[0].data();
+    return cameraMapping.cameraId;
+  } else {
+    throw new Error(`No camera mapping found for user ${user}`);
   }
 }
 
@@ -82,11 +95,12 @@ document.getElementById('barcodeForm').addEventListener('submit', async (e) => {
   const userCompany = "Your Company Name"; // 企業名、任意で設定
   const barcodeUser = barcode.slice(-5);
   const currentTime = new Date();
-  const cameraId = generateCameraId(barcodeUser);
-  const url = generateCameraUrl(cameraId, currentTime);
 
   try {
+    const cameraId = await getCameraId(userId, barcodeUser);
+    const url = generateCameraUrl(cameraId, currentTime);
     const serialNumber = await getNextSequence(userId);
+
     if (serialNumber === null) {
       console.error("Failed to get the next sequence ID.");
       return;
@@ -113,9 +127,9 @@ function generateCameraId(user) {
 }
 
 function generateCameraUrl(cameraId, time) {
-  const baseUrl = "https://safie.link/app/streaming/iZYyecNHIzoUqxiCYUOw?timestamp=";
+  const baseUrl = "https://safie.link/app/streaming/";
   const timestamp = time.getTime(); // タイムスタンプをミリ秒形式に変換
-  return `${baseUrl}${timestamp}`;
+  return `${baseUrl}${cameraId}?timestamp=${timestamp}`;
 }
 
 function formatTimestamp(time) {
