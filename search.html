@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        form, button, ul {
+            margin: 10px 0;
+        }
+        input, button {
+            margin: 5px;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <form id="loginForm">
+        <input type="email" id="email" placeholder="Email" required>
+        <input type="password" id="password" placeholder="Password" required>
+        <button type="submit">Login</button>
+    </form>
+
+    <form id="searchForm" style="display:none;">
+        <input type="text" id="searchBarcode" placeholder="Search by Barcode">
+        <input type="text" id="searchSerialNumber" placeholder="Search by Serial Number">
+        <input type="text" id="searchUser" placeholder="Search by User">
+        <input type="text" id="searchCameraId" placeholder="Search by Camera ID">
+        <input type="number" id="viewTimeOffset" placeholder="Time Offset in Seconds">
+        <button type="submit">Search</button>
+    </form>
+
+    <ul id="searchResults"></ul>
+
+    <button id="logoutButton" style="display:none;">Logout</button>    
+
+    <script type="module" src="main.js"></script>
+</body>
+</html>
