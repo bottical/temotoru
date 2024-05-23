@@ -3,6 +3,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase
 import { getFirestore, collection, addDoc, serverTimestamp, doc, runTransaction, query, where, getDocs, orderBy } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
 
+// Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyA65o0WMcpDIfwttoaXAmDU5Rqe72h9gPo",
   authDomain: "temotoru-neo.firebaseapp.com",
@@ -12,13 +13,14 @@ const firebaseConfig = {
   appId: "1:126027037708:web:c82bc8037b53fcfa62c229"
 };
 
+// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
+// Utility functions
 async function getNextSequence(userId) {
   const counterDocRef = doc(db, `users/${userId}/counters/barcodeCounter`);
-
   try {
     const nextId = await runTransaction(db, async (transaction) => {
       const counterDoc = await transaction.get(counterDocRef);
@@ -26,14 +28,11 @@ async function getNextSequence(userId) {
         transaction.set(counterDocRef, { currentValue: 1 });
         return 1;
       }
-
       const currentValue = counterDoc.data().currentValue;
       const nextValue = currentValue + 1;
-
       transaction.update(counterDocRef, { currentValue: nextValue });
       return nextValue;
     });
-
     console.log("Next sequence ID: ", nextId);
     return nextId;
   } catch (e) {
@@ -46,7 +45,6 @@ async function getCameraId(userId, user) {
   const cameraMappingRef = collection(db, `users/${userId}/cameraMapping`);
   const q = query(cameraMappingRef, where("user", "==", user));
   const querySnapshot = await getDocs(q);
-
   if (!querySnapshot.empty) {
     const cameraMapping = querySnapshot.docs[0].data();
     return cameraMapping.cameraId;
@@ -55,6 +53,38 @@ async function getCameraId(userId, user) {
   }
 }
 
+function generateCameraUrl(cameraId, time) {
+  const baseUrl = "https://safie.link/app/streaming/";
+  const timestamp = time.getTime(); // タイムスタンプをミリ秒形式に変換
+  return `${baseUrl}${cameraId}?timestamp=${timestamp}`;
+}
+
+function formatTimestamp(time) {
+  const year = time.getFullYear();
+  const month = String(time.getMonth() + 1).padStart(2, '0');
+  const day = String(time.getDate()).padStart(2, '0');
+  const hours = String(time.getHours()).padStart(2, '0');
+  const minutes = String(time.getMinutes()).padStart(2, '0');
+  const seconds = String(time.getSeconds()).padStart(2, '0');
+  return `${year}年${month}月${day}日${hours}:${minutes}:${seconds}`;
+}
+
+function updateUIOnAuthState(user) {
+  if (user) {
+    document.getElementById('barcodeForm').style.display = 'block';
+    document.getElementById('searchForm').style.display = 'block';
+    document.getElementById('loginForm').style.display = 'none';
+    document.getElementById('logoutButton').style.display = 'block';
+  } else {
+    document.getElementById('barcodeForm').style.display = 'none';
+    document.getElementById('searchForm').style.display = 'none';
+    document.getElementById('loginForm').style.display = 'block';
+    document.getElementById('logoutButton').style.display = 'none';
+    document.getElementById('searchResults').innerHTML = ''; // Clear search results
+  }
+}
+
+// Event listeners
 document.getElementById('loginForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const email = document.getElementById('email').value;
@@ -63,49 +93,22 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
   try {
     await signInWithEmailAndPassword(auth, email, password);
     console.log("User signed in successfully");
-
-    // Show the barcode, search forms, and logout button after successful login
-    document.getElementById('barcodeForm').style.display = 'block';
-    document.getElementById('searchForm').style.display = 'block';
-    document.getElementById('loginForm').style.display = 'none';
-    document.getElementById('logoutButton').style.display = 'block';
   } catch (error) {
     console.error("Error signing in: ", error.code, error.message);
   }
 });
 
 document.getElementById('logoutButton').addEventListener('click', async () => {
-    try {
-        await signOut(auth);
-        console.log("User signed out successfully");
-
-        // Hide the barcode, search forms, and logout button after successful logout
-        document.getElementById('barcodeForm').style.display = 'none';
-        document.getElementById('searchForm').style.display = 'none';
-        document.getElementById('loginForm').style.display = 'block';
-        document.getElementById('logoutButton').style.display = 'none';
-      
-        // Clear search results
-        document.getElementById('searchResults').innerHTML = '';
-    } catch (error) {
-        console.error("Error signing out: ", error);
-    }
+  try {
+    await signOut(auth);
+    console.log("User signed out successfully");
+  } catch (error) {
+    console.error("Error signing out: ", error);
+  }
 });
 
 onAuthStateChanged(auth, (user) => {
-    if (user) {
-        document.getElementById('barcodeForm').style.display = 'block';
-        document.getElementById('searchForm').style.display = 'block';
-        document.getElementById('loginForm').style.display = 'none';
-        document.getElementById('logoutButton').style.display = 'block';
-    } else {
-        document.getElementById('barcodeForm').style.display = 'none';
-        document.getElementById('searchForm').style.display = 'none';
-        document.getElementById('loginForm').style.display = 'block';
-        document.getElementById('logoutButton').style.display = 'none';
-        // Clear search results
-        document.getElementById('searchResults').innerHTML = '';
-    }
+  updateUIOnAuthState(user);
 });
 
 document.getElementById('barcodeForm').addEventListener('submit', async (e) => {
@@ -145,22 +148,6 @@ document.getElementById('barcodeForm').addEventListener('submit', async (e) => {
     console.error("Error adding document: ", e); // エラーログ
   }
 });
-
-function generateCameraUrl(cameraId, time) {
-  const baseUrl = "https://safie.link/app/streaming/";
-  const timestamp = time.getTime(); // タイムスタンプをミリ秒形式に変換
-  return `${baseUrl}${cameraId}?timestamp=${timestamp}`;
-}
-
-function formatTimestamp(time) {
-  const year = time.getFullYear();
-  const month = String(time.getMonth() + 1).padStart(2, '0');
-  const day = String(time.getDate()).padStart(2, '0');
-  const hours = String(time.getHours()).padStart(2, '0');
-  const minutes = String(time.getMinutes()).padStart(2, '0');
-  const seconds = String(time.getSeconds()).padStart(2, '0');
-  return `${year}年${month}月${day}日${hours}:${minutes}:${seconds}`;
-}
 
 document.getElementById('searchForm').addEventListener('submit', async (e) => {
   e.preventDefault();
