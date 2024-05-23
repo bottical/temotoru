@@ -1,6 +1,6 @@
 // public/main.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-import { getFirestore, collection, addDoc, serverTimestamp, doc, runTransaction, query, where, getDocs, orderBy } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, serverTimestamp, doc, runTransaction, query, where, getDocs, orderBy, setDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
 
 // Firebase configuration
@@ -53,6 +53,19 @@ async function getCameraId(userId, user) {
   }
 }
 
+async function initializeUserData(userId) {
+  // Initialize user document
+  const userDocRef = doc(db, `users/${userId}`);
+  await setDoc(userDocRef, { initialized: true });
+
+  // Initialize subcollections
+  const barcodeDataRef = collection(db, `users/${userId}/barcodeData`);
+  await addDoc(barcodeDataRef, { initialized: true });
+
+  const cameraMappingRef = collection(db, `users/${userId}/cameraMapping`);
+  await addDoc(cameraMappingRef, { initialized: true });
+}
+
 function generateCameraUrl(cameraId, time) {
   const baseUrl = "https://safie.link/app/streaming/";
   const timestamp = time.getTime(); // タイムスタンプをミリ秒形式に変換
@@ -91,7 +104,16 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
   const password = document.getElementById('password').value;
 
   try {
-    await signInWithEmailAndPassword(auth, email, password);
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
+
+    // Initialize user data if new user
+    const userDocRef = doc(db, `users/${user.uid}`);
+    const userDoc = await getDoc(userDocRef);
+    if (!userDoc.exists()) {
+      await initializeUserData(user.uid);
+    }
+
     console.log("User signed in successfully");
   } catch (error) {
     console.error("Error signing in: ", error.code, error.message);
