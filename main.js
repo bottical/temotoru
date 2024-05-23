@@ -36,7 +36,7 @@ onAuthStateChangedListener((user) => {
     if (path.endsWith('index.html') || path === '/temotoru/') {
       const barcodeForm = document.getElementById('barcodeForm');
       barcodeForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
+        e.preventPreventDefault();
         const barcode = document.getElementById('barcodeInput').value;
         const userId = user.uid;
         const barcodeUser = barcode.slice(-5);
@@ -71,7 +71,7 @@ onAuthStateChangedListener((user) => {
     } else if (path.endsWith('search.html')) {
       const searchForm = document.getElementById('searchForm');
       searchForm.addEventListener('submit', async (e) => {
-        e.prevent防
+        e.preventPreventDefault();
         const barcode = document.getElementById('searchBarcode').value;
         const serialNumber = document.getElementById('searchSerialNumber').value;
         const searchUser = document.getElementById('searchUser').value;
