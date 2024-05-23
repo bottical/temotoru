@@ -1,5 +1,5 @@
 // public/main.js
-import { auth, signIn, signOutUser, onAuthStateChangedListener, getNextSequence, getCameraId, initializeUserData } from "./firebase.js";
+import { db, auth, signIn, signOutUser, onAuthStateChangedListener, getNextSequence, getCameraId, initializeUserData, collection, addDoc, serverTimestamp, query, where, getDocs, orderBy } from "./firebase.js";
 import { showElement, hideElement, updateUIOnAuthState, formatTimestamp } from "./ui.js";
 
 function generateCameraUrl(cameraId, time) {
@@ -71,7 +71,7 @@ onAuthStateChangedListener((user) => {
     } else if (path.endsWith('search.html')) {
       const searchForm = document.getElementById('searchForm');
       searchForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
+        e.prevent防
         const barcode = document.getElementById('searchBarcode').value;
         const serialNumber = document.getElementById('searchSerialNumber').value;
         const searchUser = document.getElementById('searchUser').value;
