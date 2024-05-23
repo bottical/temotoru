@@ -90,6 +90,7 @@ function updateUIOnAuthState(user) {
   const barcodeForm = document.getElementById('barcodeForm');
   const searchForm = document.getElementById('searchForm');
   const searchResults = document.getElementById('searchResults');
+  const searchPageLink = document.getElementById('searchPageLink'); // 検索ページへのリンク
 
   console.log("Current path:", path); // デバッグ用ログ
 
@@ -99,6 +100,7 @@ function updateUIOnAuthState(user) {
       console.log("Displaying barcodeForm"); // デバッグ用ログ
       barcodeForm.style.display = 'block';
       if (searchForm) searchForm.style.display = 'none';
+      if (searchPageLink) searchPageLink.style.display = 'block'; // 検索ページへのリンクを表示
     } else if (path.endsWith('search.html') && searchForm) {
       console.log("Displaying searchForm"); // デバッグ用ログ
       searchForm.style.display = 'block';
@@ -110,6 +112,7 @@ function updateUIOnAuthState(user) {
     console.log("User is not logged in"); // デバッグ用ログ
     if (barcodeForm) barcodeForm.style.display = 'none';
     if (searchForm) searchForm.style.display = 'none';
+    if (searchPageLink) searchPageLink.style.display = 'none'; // 検索ページへのリンクを隠す
     if (loginForm) loginForm.style.display = 'block';
     if (logoutButton) logoutButton.style.display = 'none';
     if (searchResults) searchResults.innerHTML = ''; // Clear search results
