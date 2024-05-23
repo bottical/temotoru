@@ -83,6 +83,7 @@ function formatTimestamp(time) {
 }
 
 function updateUIOnAuthState(user) {
+  console.log("updateUIOnAuthState called with user:", user); // デバッグ用ログ
   const path = window.location.pathname;
   const loginForm = document.getElementById('loginForm');
   const logoutButton = document.getElementById('logoutButton');
@@ -90,17 +91,23 @@ function updateUIOnAuthState(user) {
   const searchForm = document.getElementById('searchForm');
   const searchResults = document.getElementById('searchResults');
 
+  console.log("Current path:", path); // デバッグ用ログ
+
   if (user) {
+    console.log("User is logged in"); // デバッグ用ログ
     if (path.endsWith('index.html') && barcodeForm) {
+      console.log("Displaying barcodeForm"); // デバッグ用ログ
       barcodeForm.style.display = 'block';
       if (searchForm) searchForm.style.display = 'none';
     } else if (path.endsWith('search.html') && searchForm) {
+      console.log("Displaying searchForm"); // デバッグ用ログ
       searchForm.style.display = 'block';
       if (barcodeForm) barcodeForm.style.display = 'none';
     }
     if (loginForm) loginForm.style.display = 'none';
     if (logoutButton) logoutButton.style.display = 'block';
   } else {
+    console.log("User is not logged in"); // デバッグ用ログ
     if (barcodeForm) barcodeForm.style.display = 'none';
     if (searchForm) searchForm.style.display = 'none';
     if (loginForm) loginForm.style.display = 'block';
@@ -142,6 +149,7 @@ document.getElementById('logoutButton').addEventListener('click', async () => {
 });
 
 onAuthStateChanged(auth, (user) => {
+  console.log("onAuthStateChanged triggered"); // デバッグ用ログ
   updateUIOnAuthState(user);
   if (user) {
     const path = window.location.pathname;
