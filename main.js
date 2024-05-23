@@ -84,6 +84,9 @@ document.getElementById('logoutButton').addEventListener('click', async () => {
         document.getElementById('searchForm').style.display = 'none';
         document.getElementById('loginForm').style.display = 'block';
         document.getElementById('logoutButton').style.display = 'none';
+      
+        // Clear search results
+        document.getElementById('searchResults').innerHTML = '';
     } catch (error) {
         console.error("Error signing out: ", error);
     }
@@ -100,6 +103,8 @@ onAuthStateChanged(auth, (user) => {
         document.getElementById('searchForm').style.display = 'none';
         document.getElementById('loginForm').style.display = 'block';
         document.getElementById('logoutButton').style.display = 'none';
+        // Clear search results
+        document.getElementById('searchResults').innerHTML = '';
     }
 });
 
