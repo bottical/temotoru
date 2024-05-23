@@ -75,32 +75,32 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
 });
 
 document.getElementById('logoutButton').addEventListener('click', async () => {
-  try {
-    await signOut(auth);
-    console.log("User signed out successfully");
+    try {
+        await signOut(auth);
+        console.log("User signed out successfully");
 
-    // Hide the barcode, search forms, and logout button after successful logout
-    document.getElementById('barcodeForm').style.display = 'none';
-    document.getElementById('searchForm').style.display = 'none';
-    document.getElementById('loginForm').style.display = 'block';
-    document.getElementById('logoutButton').style.display = 'none';
-  } catch (error) {
-    console.error("Error signing out: ", error);
-  }
+        // Hide the barcode, search forms, and logout button after successful logout
+        document.getElementById('barcodeForm').style.display = 'none';
+        document.getElementById('searchForm').style.display = 'none';
+        document.getElementById('loginForm').style.display = 'block';
+        document.getElementById('logoutButton').style.display = 'none';
+    } catch (error) {
+        console.error("Error signing out: ", error);
+    }
 });
 
 onAuthStateChanged(auth, (user) => {
-  if (user) {
-    document.getElementById('barcodeForm').style.display = 'block';
-    document.getElementById('searchForm').style.display = 'block';
-    document.getElementById('loginForm').style.display = 'none';
-    document.getElementById('logoutButton').style.display = 'block';
-  } else {
-    document.getElementById('barcodeForm').style.display = 'none';
-    document.getElementById('searchForm').style.display = 'none';
-    document.getElementById('loginForm').style.display = 'block';
-    document.getElementById('logoutButton').style.display = 'none';
-  }
+    if (user) {
+        document.getElementById('barcodeForm').style.display = 'block';
+        document.getElementById('searchForm').style.display = 'block';
+        document.getElementById('loginForm').style.display = 'none';
+        document.getElementById('logoutButton').style.display = 'block';
+    } else {
+        document.getElementById('barcodeForm').style.display = 'none';
+        document.getElementById('searchForm').style.display = 'none';
+        document.getElementById('loginForm').style.display = 'block';
+        document.getElementById('logoutButton').style.display = 'none';
+    }
 });
 
 document.getElementById('barcodeForm').addEventListener('submit', async (e) => {
