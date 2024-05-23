@@ -3,6 +3,15 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase
 import { getFirestore, collection, addDoc, serverTimestamp, doc, runTransaction, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
 
+const firebaseConfig = {
+  apiKey: "AIzaSyA65o0WMcpDIfwttoaXAmDU5Rqe72h9gPo",
+  authDomain: "temotoru-neo.firebaseapp.com",
+  projectId: "temotoru-neo",
+  storageBucket: "temotoru-neo.appspot.com",
+  messagingSenderId: "126027037708",
+  appId: "1:126027037708:web:c82bc8037b53fcfa62c229"
+};
+
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
@@ -46,7 +55,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     document.getElementById('searchForm').style.display = 'block';
     document.getElementById('loginForm').style.display = 'none';
   } catch (error) {
-    console.error("Error signing in: ", error);
+    console.error("Error signing in: ", error.code, error.message);
   }
 });
 
