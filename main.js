@@ -16,14 +16,15 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-async function getNextSequence() {
-  const counterDocRef = doc(db, "counters", "barcodeCounter");
+async function getNextSequence(userId) {
+  const counterDocRef = doc(db, `users/${userId}/counters/barcodeCounter`);
 
   try {
     const nextId = await runTransaction(db, async (transaction) => {
       const counterDoc = await transaction.get(counterDocRef);
       if (!counterDoc.exists()) {
-        throw "Document does not exist!";
+        transaction.set(counterDocRef, { currentValue: 1 });
+        return 1;
       }
 
       const currentValue = counterDoc.data().currentValue;
@@ -75,24 +76,30 @@ document.getElementById('barcodeForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const barcode = document.getElementById('barcodeInput').value;
   console.log("Barcode input:", barcode); // デバッグログ
-  const user = barcode.slice(-5);
+  const user = auth.currentUser;
+  const userId = user.uid;
+  const userEmail = user.email;
+  const userCompany = "Your Company Name"; // 企業名、任意で設定
+  const barcodeUser = barcode.slice(-5);
   const currentTime = new Date();
-  const cameraId = generateCameraId(user);
+  const cameraId = generateCameraId(barcodeUser);
   const url = generateCameraUrl(cameraId, currentTime);
 
   try {
-    const serialNumber = await getNextSequence();
+    const serialNumber = await getNextSequence(userId);
     if (serialNumber === null) {
       console.error("Failed to get the next sequence ID.");
       return;
     }
 
-    const docRef = await addDoc(collection(db, "barcodeData"), {
+    const docRef = await addDoc(collection(db, `users/${userId}/barcodeData`), {
       code: barcode,
       serialNumber: serialNumber, // 連番フィールド
       time: serverTimestamp(),
-      user: user,
-      cameraId: cameraId
+      user: barcodeUser,
+      cameraId: cameraId,
+      userEmail: userEmail,
+      userCompany: userCompany
     });
     console.log("Document written with ID: ", docRef.id); // デバッグログ
     document.getElementById('barcodeInput').value = '';
@@ -129,8 +136,9 @@ document.getElementById('searchForm').addEventListener('submit', async (e) => {
   const user = document.getElementById('searchUser').value;
   const cameraId = document.getElementById('searchCameraId').value;
   const viewTimeOffset = parseInt(document.getElementById('viewTimeOffset').value, 10) || 0;
+  const userId = auth.currentUser.uid;
 
-  const barcodeDataRef = collection(db, "barcodeData");
+  const barcodeDataRef = collection(db, `users/${userId}/barcodeData`);
   let q = query(barcodeDataRef);
 
   if (barcode) {
