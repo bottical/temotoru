@@ -1,6 +1,6 @@
 // public/main.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-import { getFirestore, collection, addDoc, serverTimestamp, doc, runTransaction, query, where, getDocs, getDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, serverTimestamp, doc, runTransaction, query, where, getDocs, getDoc, orderBy } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
 
 const firebaseConfig = {
@@ -46,7 +46,7 @@ async function getCameraId(userId, user) {
   const cameraMappingRef = collection(db, `users/${userId}/cameraMapping`);
   const q = query(cameraMappingRef, where("user", "==", user));
   const querySnapshot = await getDocs(q);
-  
+
   if (!querySnapshot.empty) {
     const cameraMapping = querySnapshot.docs[0].data();
     return cameraMapping.cameraId;
@@ -122,10 +122,6 @@ document.getElementById('barcodeForm').addEventListener('submit', async (e) => {
   }
 });
 
-function generateCameraId(user) {
-  return `camera_${user}`;
-}
-
 function generateCameraUrl(cameraId, time) {
   const baseUrl = "https://safie.link/app/streaming/";
   const timestamp = time.getTime(); // タイムスタンプをミリ秒形式に変換
@@ -157,14 +153,11 @@ document.getElementById('searchForm').addEventListener('submit', async (e) => {
 
   if (barcode) {
     q = query(q, where("code", ">=", barcode), where("code", "<=", barcode + "\uf8ff"));
-  }
-  if (serialNumber) {
+  } else if (serialNumber) {
     q = query(q, where("serialNumber", "==", parseInt(serialNumber)));
-  }
-  if (user) {
+  } else if (user) {
     q = query(q, where("user", ">=", user), where("user", "<=", user + "\uf8ff"));
-  }
-  if (cameraId) {
+  } else if (cameraId) {
     q = query(q, where("cameraId", ">=", cameraId), where("cameraId", "<=", cameraId + "\uf8ff"));
   }
 
