@@ -6,17 +6,25 @@
   <title>Barcode Scanner</title>
   <script type="module" src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
   <script type="module" src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
+  <script type="module" src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js"></script>
   <script type="module" src="main.js"></script>
 </head>
 <body>
+  <h1>Login</h1>
+  <form id="loginForm">
+    <input type="email" id="email" placeholder="Email" required>
+    <input type="password" id="password" placeholder="Password" required>
+    <button type="submit">Login</button>
+  </form>
+
   <h1>Barcode Data Entry</h1>
-  <form id="barcodeForm">
+  <form id="barcodeForm" style="display: none;">
     <input type="text" id="barcodeInput" placeholder="Scan barcode" required>
     <button type="submit">Submit</button>
   </form>
 
   <h1>Search Barcode Data</h1>
-  <form id="searchForm">
+  <form id="searchForm" style="display: none;">
     <input type="text" id="searchBarcode" placeholder="Search by Barcode">
     <input type="number" id="searchSerialNumber" placeholder="Search by Serial Number">
     <input type="text" id="searchUser" placeholder="Search by User">
