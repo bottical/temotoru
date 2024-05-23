@@ -4,20 +4,42 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Barcode App</title>
+    <style>
+        /* 簡単なスタイルを追加 */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        form, button, ul {
+            margin: 10px 0;
+        }
+        input, button {
+            margin: 5px;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            margin: 5px 0;
+        }
+    </style>
 </head>
 <body>
-    <!-- Existing forms and elements -->
+    <!-- Login Form -->
     <form id="loginForm">
-        <input type="email" id="email" placeholder="Email">
-        <input type="password" id="password" placeholder="Password">
+        <input type="email" id="email" placeholder="Email" required>
+        <input type="password" id="password" placeholder="Password" required>
         <button type="submit">Login</button>
     </form>
 
+    <!-- Barcode Input Form -->
     <form id="barcodeForm" style="display:none;">
-        <input type="text" id="barcodeInput" placeholder="Enter barcode">
+        <input type="text" id="barcodeInput" placeholder="Enter barcode" required>
         <button type="submit">Submit Barcode</button>
     </form>
 
+    <!-- Search Form -->
     <form id="searchForm" style="display:none;">
         <input type="text" id="searchBarcode" placeholder="Search by Barcode">
         <input type="text" id="searchSerialNumber" placeholder="Search by Serial Number">
@@ -27,8 +49,10 @@
         <button type="submit">Search</button>
     </form>
 
+    <!-- Search Results -->
     <ul id="searchResults"></ul>
 
+    <!-- Logout Button -->
     <button id="logoutButton" style="display:none;">Logout</button>    
     
     <script type="module" src="main.js"></script>
