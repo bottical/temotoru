@@ -149,19 +149,19 @@ document.getElementById('searchForm').addEventListener('submit', async (e) => {
   const userId = auth.currentUser.uid;
 
   const barcodeDataRef = collection(db, `users/${userId}/barcodeData`);
-  let q = query(barcodeDataRef);
+  let q = query(barcodeDataRef, orderBy("serialNumber", "desc")); // デフォルトでserialNumberの降順
 
   if (barcode) {
-    q = query(q, where("code", ">=", barcode), where("code", "<=", barcode + "\uf8ff"), orderBy("code"), orderBy("serialNumber", "desc"));
+    q = query(q, where("code", ">=", barcode), where("code", "<=", barcode + "\uf8ff"), orderBy("code"));
   }
   if (serialNumber) {
-    q = query(q, where("serialNumber", "==", parseInt(serialNumber)), orderBy("serialNumber", "desc"));
+    q = query(q, where("serialNumber", "==", parseInt(serialNumber)));
   }
   if (user) {
-    q = query(q, where("user", ">=", user), where("user", "<=", user + "\uf8ff"), orderBy("user"), orderBy("serialNumber", "desc"));
+    q = query(q, where("user", ">=", user), where("user", "<=", user + "\uf8ff"), orderBy("user"));
   }
   if (cameraId) {
-    q = query(q, where("cameraId", ">=", cameraId), where("cameraId", "<=", cameraId + "\uf8ff"), orderBy("cameraId"), orderBy("serialNumber", "desc"));
+    q = query(q, where("cameraId", ">=", cameraId), where("cameraId", "<=", cameraId + "\uf8ff"), orderBy("cameraId"));
   }
 
   try {
