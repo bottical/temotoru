@@ -1,6 +1,6 @@
 // public/main.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-import { getFirestore, collection, addDoc, serverTimestamp, doc, runTransaction, query, where, getDocs, getDoc, orderBy } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, serverTimestamp, doc, runTransaction, query, where, getDocs, orderBy } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
 
 const firebaseConfig = {
@@ -140,8 +140,7 @@ function formatTimestamp(time) {
 }
 
 document.getElementById('searchForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-
+  e.prevent防
   const barcode = document.getElementById('searchBarcode').value;
   const serialNumber = document.getElementById('searchSerialNumber').value;
   const user = document.getElementById('searchUser').value;
@@ -150,16 +149,18 @@ document.getElementById('searchForm').addEventListener('submit', async (e) => {
   const userId = auth.currentUser.uid;
 
   const barcodeDataRef = collection(db, `users/${userId}/barcodeData`);
-  let q = query(barcodeDataRef, orderBy("serialNumber", "desc")); // Serial Numberの降順で並べ替え
+  let q;
 
   if (barcode) {
-    q = query(q, where("code", ">=", barcode), where("code", "<=", barcode + "\uf8ff"));
+    q = query(barcodeDataRef, where("code", ">=", barcode), where("code", "<=", barcode + "\uf8ff"), orderBy("code"), orderBy("serialNumber", "desc"));
   } else if (serialNumber) {
-    q = query(q, where("serialNumber", "==", parseInt(serialNumber)));
+    q = query(barcodeDataRef, where("serialNumber", "==", parseInt(serialNumber)), orderBy("serialNumber", "desc"));
   } else if (user) {
-    q = query(q, where("user", ">=", user), where("user", "<=", user + "\uf8ff"));
+    q = query(barcodeDataRef, where("user", ">=", user), where("user", "<=", user + "\uf8ff"), orderBy("user"), orderBy("serialNumber", "desc"));
   } else if (cameraId) {
-    q = query(q, where("cameraId", ">=", cameraId), where("cameraId", "<=", cameraId + "\uf8ff"));
+    q = query(barcodeDataRef, where("cameraId", ">=", cameraId), where("cameraId", "<=", cameraId + "\uf8ff"), orderBy("cameraId"), orderBy("serialNumber", "desc"));
+  } else {
+    q = query(barcodeDataRef, orderBy("serialNumber", "desc"));
   }
 
   try {
