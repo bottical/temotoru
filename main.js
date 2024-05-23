@@ -140,7 +140,7 @@ function formatTimestamp(time) {
 }
 
 document.getElementById('searchForm').addEventListener('submit', async (e) => {
-  e.preventPrevent();
+  e.preventDefault();
   const barcode = document.getElementById('searchBarcode').value;
   const serialNumber = document.getElementById('searchSerialNumber').value;
   const user = document.getElementById('searchUser').value;
