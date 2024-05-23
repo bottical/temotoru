@@ -1,6 +1,6 @@
 // public/main.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-import { getFirestore, collection, addDoc, serverTimestamp, doc, runTransaction, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, serverTimestamp, doc, runTransaction, query, where, getDocs, orderBy } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
 
 const firebaseConfig = {
@@ -139,7 +139,7 @@ document.getElementById('searchForm').addEventListener('submit', async (e) => {
   const userId = auth.currentUser.uid;
 
   const barcodeDataRef = collection(db, `users/${userId}/barcodeData`);
-  let q = query(barcodeDataRef);
+  let q = query(barcodeDataRef, orderBy("serialNumber", "desc")); // Serial Numberの降順で並べ替え
 
   if (barcode) {
     q = query(q, where("code", ">=", barcode), where("code", "<=", barcode + "\uf8ff"));
