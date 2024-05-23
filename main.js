@@ -93,10 +93,10 @@ function updateUIOnAuthState(user) {
   if (user) {
     if (path.endsWith('index.html') && barcodeForm) {
       barcodeForm.style.display = 'block';
-      searchForm.style.display = 'none';
+      if (searchForm) searchForm.style.display = 'none';
     } else if (path.endsWith('search.html') && searchForm) {
       searchForm.style.display = 'block';
-      barcodeForm.style.display = 'none';
+      if (barcodeForm) barcodeForm.style.display = 'none';
     }
     if (loginForm) loginForm.style.display = 'none';
     if (logoutButton) logoutButton.style.display = 'block';
