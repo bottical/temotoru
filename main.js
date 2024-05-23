@@ -94,6 +94,7 @@ document.getElementById('barcodeForm').addEventListener('submit', async (e) => {
   const userEmail = user.email;
   const userCompany = "Your Company Name"; // 企業名、任意で設定
   const barcodeUser = barcode.slice(-5);
+  const pureBarcode = barcode.slice(0, -5); // ユーザー情報を除いた部分
   const currentTime = new Date();
 
   try {
@@ -107,7 +108,7 @@ document.getElementById('barcodeForm').addEventListener('submit', async (e) => {
     }
 
     const docRef = await addDoc(collection(db, `users/${userId}/barcodeData`), {
-      code: barcode,
+      code: pureBarcode,
       serialNumber: serialNumber, // 連番フィールド
       time: serverTimestamp(),
       user: barcodeUser,
