@@ -1,18 +1,11 @@
 // public/main.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-import { getFirestore, collection, addDoc, serverTimestamp, doc, runTransaction, query, where, getDocs, orderBy } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyA65o0WMcpDIfwttoaXAmDU5Rqe72h9gPo",
-  authDomain: "temotoru-neo.firebaseapp.com",
-  projectId: "temotoru-neo",
-  storageBucket: "temotoru-neo.appspot.com",
-  messagingSenderId: "126027037708",
-  appId: "1:126027037708:web:c82bc8037b53fcfa62c229"
-};
+import { getFirestore, collection, addDoc, serverTimestamp, doc, runTransaction, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const auth = getAuth(app);
 
 async function getNextSequence() {
   const counterDocRef = doc(db, "counters", "barcodeCounter");
@@ -38,6 +31,36 @@ async function getNextSequence() {
     return null;
   }
 }
+
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const email = document.getElementById('email').value;
+  const password = document.getElementById('password').value;
+
+  try {
+    await signInWithEmailAndPassword(auth, email, password);
+    console.log("User signed in successfully");
+
+    // Show the barcode and search forms after successful login
+    document.getElementById('barcodeForm').style.display = 'block';
+    document.getElementById('searchForm').style.display = 'block';
+    document.getElementById('loginForm').style.display = 'none';
+  } catch (error) {
+    console.error("Error signing in: ", error);
+  }
+});
+
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    document.getElementById('barcodeForm').style.display = 'block';
+    document.getElementById('searchForm').style.display = 'block';
+    document.getElementById('loginForm').style.display = 'none';
+  } else {
+    document.getElementById('barcodeForm').style.display = 'none';
+    document.getElementById('searchForm').style.display = 'none';
+    document.getElementById('loginForm').style.display = 'block';
+  }
+});
 
 document.getElementById('barcodeForm').addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -113,8 +136,6 @@ document.getElementById('searchForm').addEventListener('submit', async (e) => {
   if (cameraId) {
     q = query(q, where("cameraId", ">=", cameraId), where("cameraId", "<=", cameraId + "\uf8ff"));
   }
-
-  q = query(q, orderBy("serialNumber", "desc")); // Serial Numberを降順でソート
 
   try {
     const querySnapshot = await getDocs(q);
