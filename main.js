@@ -95,7 +95,7 @@ function updateUIOnAuthState(user) {
 
   if (user) {
     console.log("User is logged in"); // デバッグ用ログ
-    if (path.endsWith('index.html') && barcodeForm) {
+    if ((path.endsWith('index.html') || path === '/temotoru/') && barcodeForm) {
       console.log("Displaying barcodeForm"); // デバッグ用ログ
       barcodeForm.style.display = 'block';
       if (searchForm) searchForm.style.display = 'none';
@@ -153,7 +153,7 @@ onAuthStateChanged(auth, (user) => {
   updateUIOnAuthState(user);
   if (user) {
     const path = window.location.pathname;
-    if (path.endsWith('index.html')) {
+    if (path.endsWith('index.html') || path === '/temotoru/') {
       // Attach barcode form event listener
       const barcodeForm = document.getElementById('barcodeForm');
       if (barcodeForm) {
