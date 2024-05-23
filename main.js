@@ -1,7 +1,7 @@
 // public/main.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
 import { getFirestore, collection, addDoc, serverTimestamp, doc, runTransaction, query, where, getDocs, orderBy } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
-import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyA65o0WMcpDIfwttoaXAmDU5Rqe72h9gPo",
@@ -64,12 +64,28 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     await signInWithEmailAndPassword(auth, email, password);
     console.log("User signed in successfully");
 
-    // Show the barcode and search forms after successful login
+    // Show the barcode, search forms, and logout button after successful login
     document.getElementById('barcodeForm').style.display = 'block';
     document.getElementById('searchForm').style.display = 'block';
     document.getElementById('loginForm').style.display = 'none';
+    document.getElementById('logoutButton').style.display = 'block';
   } catch (error) {
     console.error("Error signing in: ", error.code, error.message);
+  }
+});
+
+document.getElementById('logoutButton').addEventListener('click', async () => {
+  try {
+    await signOut(auth);
+    console.log("User signed out successfully");
+
+    // Hide the barcode, search forms, and logout button after successful logout
+    document.getElementById('barcodeForm').style.display = 'none';
+    document.getElementById('searchForm').style.display = 'none';
+    document.getElementById('loginForm').style.display = 'block';
+    document.getElementById('logoutButton').style.display = 'none';
+  } catch (error) {
+    console.error("Error signing out: ", error);
   }
 });
 
@@ -78,10 +94,12 @@ onAuthStateChanged(auth, (user) => {
     document.getElementById('barcodeForm').style.display = 'block';
     document.getElementById('searchForm').style.display = 'block';
     document.getElementById('loginForm').style.display = 'none';
+    document.getElementById('logoutButton').style.display = 'block';
   } else {
     document.getElementById('barcodeForm').style.display = 'none';
     document.getElementById('searchForm').style.display = 'none';
     document.getElementById('loginForm').style.display = 'block';
+    document.getElementById('logoutButton').style.display = 'none';
   }
 });
 
