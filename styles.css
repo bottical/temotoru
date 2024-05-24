@@ -90,10 +90,15 @@ body {
   cursor: pointer;
 }
 
+.result-table-container {
+  width: 80%; /* 画面全体の80% */
+  margin: 0 auto; /* 中央揃え */
+  margin-top: 20px; /* 上部の余白 */
+}
+
 .result-table {
-  width: 100%;
+  width: 100%; /* 親要素の幅に合わせる */
   border-collapse: collapse;
-  margin-top: 20px;
 }
 
 .result-table th, .result-table td {
