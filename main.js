@@ -1,5 +1,5 @@
 // public/main.js
-import { db, auth, signIn, signOutUser, onAuthStateChangedListener, getNextSequence, getCameraId, initializeUserData, collection, addDoc, serverTimestamp, query, where, getDocs, orderBy } from "./firebase.js";
+import { db, auth, signIn, signOutUser, onAuthStateChangedListener, getNextSequence, getCameraId, initializeUserData, collection, addDoc, serverTimestamp, query, where, getDocs, orderBy, limit } from "./firebase.js";
 import { showElement, hideElement, updateUIOnAuthState, formatTimestamp } from "./ui.js";
 
 function generateCameraUrl(cameraId, time) {
