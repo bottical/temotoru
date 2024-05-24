@@ -10,7 +10,7 @@ body {
     flex-direction: column; /* 縦方向に配置 */
     align-items: center;
     justify-content: center;
-    gap: 50px; /* ロゴとフォームの間の隙間を調整 */
+    gap: 100px; /* ロゴとフォームの間の隙間を調整 */
 }
 
 .form-container {
