@@ -14,7 +14,7 @@ export function updateUIOnAuthState(user, path) {
   const searchForm = document.getElementById('searchForm');
   const searchResults = document.getElementById('searchResults');
   const searchPageLink = document.getElementById('searchPageLink');
-  const inputtPageLink = document.getElementById('inputPageLink');
+  const inputPageLink = document.getElementById('inputPageLink');
 
   if (user) {
     if ((path.endsWith('index.html') || path === '/temotoru/') && barcodeForm) {
