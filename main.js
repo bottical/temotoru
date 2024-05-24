@@ -1,5 +1,5 @@
 // public/main.js
-import { db, auth, signIn, signOutUser, onAuthStateChangedListener, getNextSequence, getCameraId, initializeUserData, collection, addDoc, serverTimestamp, query, where, getDocs, orderBy, limit } from "./firebase.js";
+import { db, auth, signIn, signOutUser, onAuthStateChangedListener, getNextSequence, getCameraId, initializeUserData, collection, addDoc, serverTimestamp, query, where, getDocs, orderBy } from "./firebase.js";
 import { showElement, hideElement, updateUIOnAuthState, formatTimestamp } from "./ui.js";
 
 function generateCameraUrl(cameraId, time) {
@@ -84,16 +84,19 @@ onAuthStateChangedListener((user) => {
         let q = query(barcodeDataRef);
 
         if (barcode) {
-          q = query(q, where("code", ">=", barcode), where("code", "<=", barcode + "\uf8ff"), orderBy("code"), orderBy("serialNumber", "desc"), limit(limitCount));
+          q = query(q, where("code", ">=", barcode), where("code", "<=", barcode + "\uf8ff"), orderBy("code"), orderBy("serialNumber", "desc"));
         } else if (serialNumber) {
-          q = query(q, where("serialNumber", "==", parseInt(serialNumber)), orderBy("serialNumber", "desc"), limit(limitCount));
+          q = query(q, where("serialNumber", "==", parseInt(serialNumber)), orderBy("serialNumber", "desc"));
         } else if (searchUser) {
-          q = query(q, where("user", ">=", searchUser), where("user", "<=", searchUser + "\uf8ff"), orderBy("user"), orderBy("serialNumber", "desc"), limit(limitCount));
+          q = query(q, where("user", ">=", searchUser), where("user", "<=", searchUser + "\uf8ff"), orderBy("user"), orderBy("serialNumber", "desc"));
         } else if (cameraId) {
-          q = query(q, where("cameraId", ">=", cameraId), where("cameraId", "<=", cameraId + "\uf8ff"), orderBy("cameraId"), orderBy("serialNumber", "desc"), limit(limitCount));
+          q = query(q, where("cameraId", ">=", cameraId), where("cameraId", "<=", cameraId + "\uf8ff"), orderBy("cameraId"), orderBy("serialNumber", "desc"));
         } else {
-          q = query(q, orderBy("serialNumber", "desc"), limit(limitCount)); // デフォルトでserialNumberの降順
+          q = query(q, orderBy("serialNumber", "desc")); // デフォルトでserialNumberの降順
         }
+
+        // クエリにリミットを適用
+        q = query(q, limit(limitCount));
 
         try {
           const querySnapshot = await getDocs(q);
