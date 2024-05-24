@@ -1,15 +1,24 @@
 body {
     font-family: Arial, sans-serif;
     margin: 0;
-    text-align: center; /* 追加: 中央揃え */
+    text-align: center; /* 中央揃え */
+    padding-top: 50px; /* ページ上部の余白を調整 */
 }
 
 .search-container {
     display: flex;
-    flex-direction: column; /* 変更: 縦方向に配置 */
+    flex-direction: column; /* 縦方向に配置 */
     align-items: center;
     justify-content: center;
-    padding: 20px; /* 修正: 適切な余白に変更 */
+    gap: 20px; /* ロゴとフォームの間の隙間を調整 */
+}
+
+.form-container {
+    display: flex;
+    flex-direction: row; /* 横並びに配置 */
+    align-items: center;
+    justify-content: center;
+    gap: 10px; /* フォームとボタンの間の隙間を調整 */
 }
 
 .search-input {
@@ -17,7 +26,6 @@ body {
     border-radius: 5px;
     padding: 10px;
     width: 300px;
-    margin-top: 10px; /* 追加: ロゴと入力フィールドの間に余白を追加 */
 }
 
 .search-button {
@@ -30,7 +38,6 @@ body {
     font-weight: 600;
     background: rgb(149,202,252);
     background: linear-gradient(270deg, rgba(149,202,252,1) 0%, rgba(107,182,255,1) 100%);
-    margin-top: 10px; /* 追加: 入力フィールドとボタンの間に余白を追加 */
 }
 
 .search-button:hover {
