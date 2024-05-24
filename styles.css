@@ -52,8 +52,18 @@ body {
 
 /* 新しいスタイルを追加して隙間を調整 */
 #searchPageLink {
-    display: block;
+    display: inline-block; /* インラインブロックに設定して幅をテキストに合わせる */
     margin-top: 300px; /* フォームとリンクの間の隙間を調整 */
+    padding: 5px 10px; /* クリックしやすいようにパディングを追加 */
+    text-decoration: none; /* リンクの下線を除去 */
+    color: #007BFF; /* リンクの色を設定 */
+    border-radius: 5px; /* 角を丸くする */
+    background-color: #f0f0f0; /* 背景色を設定 */
+}
+
+#searchPageLink:hover {
+    background-color: #e0e0e0; /* ホバー時の背景色を変更 */
+    color: #0056b3; /* ホバー時のテキスト色を変更 */
 }
 
 #inputPageLink {
