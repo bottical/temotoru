@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ja">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Barcode Input</title>
+        <link rel="stylesheet" href="styles.css">
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -25,8 +26,9 @@
     </form>
 
     <form id="barcodeForm" style="display:none;">
-        <input type="text" id="barcodeInput" placeholder="Enter barcode" required>
-        <button type="submit">Submit Barcode</button>
+        <div class="search-container">
+        <input type="text" id="barcodeInput" class="search-input" placeholder="バーコード入力" required>
+        <button type="submit" class="search-button">入力</button>
     </form>
 
     <!-- 検索ページへのリンク -->
