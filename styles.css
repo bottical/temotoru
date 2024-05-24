@@ -19,10 +19,8 @@ body {
 .search-input {
     border: 2px solid #ccc;
     align-items: center;
-    padding: 20px;
-    font-size: 14px;
+    padding: 5px;
     border-radius: 5px;
-    padding: 3px;
     width: 300px;
 }
 
