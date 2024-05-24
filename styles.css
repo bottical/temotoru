@@ -17,13 +17,11 @@ body {
 
 .search-button {
     border-radius: 3px;
-    position: relative;
-    display: flex;
     justify-content: space-around;
     align-items: center;
     margin: 0 auto;
     max-width: 220px;
-    padding: 10px 25px;
+    padding: 10px;
     color: #FFF;
     transition: 0.3s ease-in-out;
     font-weight: 600;
