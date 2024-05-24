@@ -51,7 +51,7 @@ body {
 }
 
 /* 新しいスタイルを追加して隙間を調整 */
-#searchPageLink {
+.searchPageLink {
     display: block;
     margin-top: 300px; /* フォームとリンクの間の隙間を調整 */
 }
