@@ -56,8 +56,6 @@ body {
     margin-top: 300px; /* フォームとリンクの間の隙間を調整 */
 }
 
-
-/* styles.cssに以下のスタイルを追加 */
 .modal {
   display: none; /* デフォルトでは非表示 */
   position: fixed; /* 固定表示 */
@@ -91,6 +89,7 @@ body {
   text-decoration: none;
   cursor: pointer;
 }
+
 .result-table {
   width: 100%;
   border-collapse: collapse;
