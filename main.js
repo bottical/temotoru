@@ -99,6 +99,7 @@ onAuthStateChangedListener((user) => {
     } else if (path.endsWith('search.html')) {
       const searchForm = document.getElementById('searchForm');
       if (searchForm) {
+        showElement(searchForm);
         searchForm.addEventListener('submit', async (e) => {
           e.preventDefault();
           const barcode = document.getElementById('searchBarcode').value;
