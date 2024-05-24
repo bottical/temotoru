@@ -4,7 +4,6 @@ body {
 }
 
 .search-container {
-　　width: 500px;
 　　display: flex;
 　  flex-wrap: wrap;
     justify-content: center;
