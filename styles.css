@@ -11,6 +11,11 @@ body {
     width: 300px;
 }
 
+.search-container:focus {
+   outline: 0;
+    box-shadow: 0 0 0 2px rgb(33, 150, 243) inset;
+}
+
 .search-input {
     border: none;
     outline: none;
@@ -22,7 +27,7 @@ body {
 .search-button {
     background: none;
     border: none;
-    border-left:solid 2px;
+    border-left:solid 2px #ccc;
     cursor: pointer;
     padding: 5px;
 }
