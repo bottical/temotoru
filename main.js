@@ -137,22 +137,47 @@ onAuthStateChangedListener((user) => {
           try {
             const querySnapshot = await getDocs(q);
             const results = document.getElementById('searchResults');
-            results.innerHTML = '';
+            results.innerHTML = ''; // 既存の結果をクリア
 
+            // テーブルのヘッダーを追加
+            const table = document.createElement('table');
+            table.className = 'result-table';
+            const header = table.createTHead();
+            const headerRow = header.insertRow(0);
+            const headers = ['Barcode', 'Serial Number', 'User', 'Camera ID', 'Timestamp', 'URL'];
+            headers.forEach((headerText, index) => {
+              const cell = headerRow.insertCell(index);
+              cell.textContent = headerText;
+            });
+
+            // テーブルのボディにデータを追加
+            const tbody = document.createElement('tbody');
             querySnapshot.forEach((doc) => {
               const data = doc.data();
               const offsetTime = new Date(data.time.toMillis() - viewTimeOffset * 1000);
               const url = generateCameraUrl(data.cameraId, offsetTime);
               const formattedTimestamp = formatTimestamp(offsetTime);
-              const listItem = document.createElement('li');
-              listItem.innerHTML = `Barcode: ${data.code}, Serial Number: ${data.serialNumber}, User: ${data.user}, Camera ID: ${data.cameraId}, ${formattedTimestamp} <a href="${url}" target="_blank">URL</a>`;
-              results.appendChild(listItem);
+              const row = tbody.insertRow();
+              row.insertCell(0).textContent = data.code;
+              row.insertCell(1).textContent = data.serialNumber;
+              row.insertCell(2).textContent = data.user;
+              row.insertCell(3).textContent = data.cameraId;
+              row.insertCell(4).textContent = formattedTimestamp;
+              const linkCell = row.insertCell(5);
+              const link = document.createElement('a');
+              link.href = url;
+              link.target = '_blank';
+              link.textContent = 'URL';
+              linkCell.appendChild(link);
             });
 
+            table.appendChild(tbody);
+            results.appendChild(table);
+
             if (querySnapshot.empty) {
-              const listItem = document.createElement('li');
-              listItem.textContent = 'No results found';
-              results.appendChild(listItem);
+              const noResults = document.createElement('p');
+              noResults.textContent = 'No results found';
+              results.appendChild(noResults);
             }
           } catch (e) {
             console.error("Error searching documents: ", e);
