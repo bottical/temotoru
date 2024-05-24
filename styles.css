@@ -1,11 +1,12 @@
 body {
     font-family: Arial, sans-serif;
+    margin: 0 auto;
 }
 
 .search-container {
     display: flex;
     align-items: center;
-    padding: 20px;
+    padding: 200px;
 }
 
 .search-input {
