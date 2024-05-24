@@ -16,17 +16,20 @@ function showErrorModal(message) {
   modal.style.display = 'block';
 }
 
-// モーダルを閉じるボタンの処理
-document.querySelector('.close-button').addEventListener('click', () => {
+// モーダルを閉じる関数
+function hideErrorModal() {
   const modal = document.getElementById('errorModal');
   modal.style.display = 'none';
-});
+}
+
+// モーダルを閉じるボタンの処理
+document.querySelector('.close-button').addEventListener('click', hideErrorModal);
 
 // モーダルの外側をクリックしたときに閉じる処理
 window.addEventListener('click', (event) => {
   const modal = document.getElementById('errorModal');
   if (event.target == modal) {
-    modal.style.display = 'none';
+    hideErrorModal();
   }
 });
 
@@ -54,6 +57,9 @@ onAuthStateChangedListener((user) => {
   const path = window.location.pathname;
   console.log('Auth state changed, current path:', path);
   updateUIOnAuthState(user, path);
+
+  // ページがロードされた際にモーダルをリセット
+  hideErrorModal();
 
   if (user) {
     if (path.endsWith('index.html') || path === '/temotoru/') {
