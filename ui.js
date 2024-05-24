@@ -14,6 +14,7 @@ export function updateUIOnAuthState(user, path) {
   const searchForm = document.getElementById('searchForm');
   const searchResults = document.getElementById('searchResults');
   const searchPageLink = document.getElementById('searchPageLink');
+  const inputtPageLink = document.getElementById('inputPageLink');
 
   if (user) {
     if ((path.endsWith('index.html') || path === '/temotoru/') && barcodeForm) {
@@ -23,6 +24,7 @@ export function updateUIOnAuthState(user, path) {
     } else if (path.endsWith('search.html') && searchForm) {
       showElement(searchForm);
       hideElement(barcodeForm);
+      showElement(inputPageLink);
     }
     hideElement(loginForm);
     showElement(logoutButton);
@@ -30,6 +32,7 @@ export function updateUIOnAuthState(user, path) {
     hideElement(barcodeForm);
     hideElement(searchForm);
     hideElement(searchPageLink);
+    hideElement(inputPageLink);
     showElement(loginForm);
     hideElement(logoutButton);
     if (searchResults) searchResults.innerHTML = ''; // Clear search results
