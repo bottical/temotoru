@@ -1,14 +1,15 @@
 body {
     font-family: Arial, sans-serif;
-    margin: 0 auto;
+    margin: 0;
+    text-align: center; /* 追加: 中央揃え */
 }
 
 .search-container {
-　　display: flex;
-　  flex-wrap: wrap;
-    justify-content: center;
+    display: flex;
+    flex-direction: column; /* 変更: 縦方向に配置 */
     align-items: center;
-    padding: 200px;
+    justify-content: center;
+    padding: 20px; /* 修正: 適切な余白に変更 */
 }
 
 .search-input {
@@ -16,13 +17,12 @@ body {
     border-radius: 5px;
     padding: 10px;
     width: 300px;
+    margin-top: 10px; /* 追加: ロゴと入力フィールドの間に余白を追加 */
 }
 
 .search-button {
     border-radius: 5px;
     border: none;
-    justify-content: space-around;
-    align-items: center;
     cursor: pointer;
     padding: 10px;
     color: #FFF;
@@ -30,6 +30,7 @@ body {
     font-weight: 600;
     background: rgb(149,202,252);
     background: linear-gradient(270deg, rgba(149,202,252,1) 0%, rgba(107,182,255,1) 100%);
+    margin-top: 10px; /* 追加: 入力フィールドとボタンの間に余白を追加 */
 }
 
 .search-button:hover {
