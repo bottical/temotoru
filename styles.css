@@ -6,7 +6,7 @@ body {
 .search-container {
 　　width: 500px;
 　　display: flex;
-　  flexWrap: wrap;
+　  flex-wrap: wrap;
     justify-content: center;
     align-items: center;
     padding: 200px;
