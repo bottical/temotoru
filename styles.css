@@ -56,6 +56,12 @@ body {
     margin-top: 300px; /* フォームとリンクの間の隙間を調整 */
 }
 
+#inputPageLink {
+    display: block;
+    margin-top: 300px; /* フォームとリンクの間の隙間を調整 */
+}
+
+
 .modal {
   display: none; /* デフォルトでは非表示 */
   position: fixed; /* 固定表示 */
