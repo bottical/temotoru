@@ -37,6 +37,8 @@ onAuthStateChangedListener((user) => {
     if (path.endsWith('index.html') || path === '/temotoru/') {
       const barcodeForm = document.getElementById('barcodeForm');
       if (barcodeForm) {
+      　showElement(barcodeForm);
+        document.getElementById('barcodeInput').focus(); // フォーカスを設定
         barcodeForm.addEventListener('submit', async (e) => {
           e.preventDefault();
           const barcode = document.getElementById('barcodeInput').value;
