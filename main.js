@@ -30,98 +30,103 @@ document.getElementById('logoutButton').addEventListener('click', async () => {
 
 onAuthStateChangedListener((user) => {
   const path = window.location.pathname;
+  console.log('Auth state changed, current path:', path);
   updateUIOnAuthState(user, path);
 
   if (user) {
     if (path.endsWith('index.html') || path === '/temotoru/') {
       const barcodeForm = document.getElementById('barcodeForm');
-      barcodeForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const barcode = document.getElementById('barcodeInput').value;
-        const userId = user.uid;
-        const barcodeUser = barcode.slice(-5);
-        const pureBarcode = barcode.slice(0, -5); // ユーザー情報を除いた部分
-        const currentTime = new Date();
+      if (barcodeForm) {
+        barcodeForm.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const barcode = document.getElementById('barcodeInput').value;
+          const userId = user.uid;
+          const barcodeUser = barcode.slice(-5);
+          const pureBarcode = barcode.slice(0, -5); // ユーザー情報を除いた部分
+          const currentTime = new Date();
 
-        try {
-          const cameraId = await getCameraId(userId, barcodeUser);
-          const url = generateCameraUrl(cameraId, currentTime);
-          const serialNumber = await getNextSequence(userId);
+          try {
+            const cameraId = await getCameraId(userId, barcodeUser);
+            const url = generateCameraUrl(cameraId, currentTime);
+            const serialNumber = await getNextSequence(userId);
 
-          if (serialNumber === null) {
-            console.error("Failed to get the next sequence ID.");
-            return;
+            if (serialNumber === null) {
+              console.error("Failed to get the next sequence ID.");
+              return;
+            }
+
+            const docRef = await addDoc(collection(db, `users/${userId}/barcodeData`), {
+              code: pureBarcode,
+              serialNumber: serialNumber, // 連番フィールド
+              time: serverTimestamp(),
+              user: barcodeUser,
+              cameraId: cameraId,
+              userEmail: user.email,
+              userCompany: "Your Company Name" // 企業名、任意で設定
+            });
+            console.log("Document written with ID: ", docRef.id); // デバッグログ
+            document.getElementById('barcodeInput').value = '';
+          } catch (e) {
+            console.error("Error adding document: ", e); // エラーログ
           }
-
-          const docRef = await addDoc(collection(db, `users/${userId}/barcodeData`), {
-            code: pureBarcode,
-            serialNumber: serialNumber, // 連番フィールド
-            time: serverTimestamp(),
-            user: barcodeUser,
-            cameraId: cameraId,
-            userEmail: user.email,
-            userCompany: "Your Company Name" // 企業名、任意で設定
-          });
-          console.log("Document written with ID: ", docRef.id); // デバッグログ
-          document.getElementById('barcodeInput').value = '';
-        } catch (e) {
-          console.error("Error adding document: ", e); // エラーログ
-        }
-      });
+        });
+      }
     } else if (path.endsWith('search.html')) {
       const searchForm = document.getElementById('searchForm');
-      searchForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const barcode = document.getElementById('searchBarcode').value;
-        const serialNumber = document.getElementById('searchSerialNumber').value;
-        const searchUser = document.getElementById('searchUser').value;
-        const cameraId = document.getElementById('searchCameraId').value;
-        const viewTimeOffset = parseInt(document.getElementById('viewTimeOffset').value, 10) || 0;
-        const userId = user.uid;
-        const limitCount = 10; // 表示件数の制限
+      if (searchForm) {
+        searchForm.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const barcode = document.getElementById('searchBarcode').value;
+          const serialNumber = document.getElementById('searchSerialNumber').value;
+          const searchUser = document.getElementById('searchUser').value;
+          const cameraId = document.getElementById('searchCameraId').value;
+          const viewTimeOffset = parseInt(document.getElementById('viewTimeOffset').value, 10) || 0;
+          const userId = user.uid;
+          const limitCount = 10; // 表示件数の制限
 
-        const barcodeDataRef = collection(db, `users/${userId}/barcodeData`);
-        let q = query(barcodeDataRef);
+          const barcodeDataRef = collection(db, `users/${userId}/barcodeData`);
+          let q = query(barcodeDataRef);
 
-        if (barcode) {
-          q = query(q, where("code", ">=", barcode), where("code", "<=", barcode + "\uf8ff"), orderBy("code"), orderBy("serialNumber", "desc"));
-        } else if (serialNumber) {
-          q = query(q, where("serialNumber", "==", parseInt(serialNumber)), orderBy("serialNumber", "desc"));
-        } else if (searchUser) {
-          q = query(q, where("user", ">=", searchUser), where("user", "<=", searchUser + "\uf8ff"), orderBy("user"), orderBy("serialNumber", "desc"));
-        } else if (cameraId) {
-          q = query(q, where("cameraId", ">=", cameraId), where("cameraId", "<=", cameraId + "\uf8ff"), orderBy("cameraId"), orderBy("serialNumber", "desc"));
-        } else {
-          q = query(q, orderBy("serialNumber", "desc")); // デフォルトでserialNumberの降順
-        }
-
-        // クエリにリミットを適用
-        q = query(q, limit(limitCount));
-
-        try {
-          const querySnapshot = await getDocs(q);
-          const results = document.getElementById('searchResults');
-          results.innerHTML = '';
-
-          querySnapshot.forEach((doc) => {
-            const data = doc.data();
-            const offsetTime = new Date(data.time.toMillis() - viewTimeOffset * 1000);
-            const url = generateCameraUrl(data.cameraId, offsetTime);
-            const formattedTimestamp = formatTimestamp(offsetTime);
-            const listItem = document.createElement('li');
-            listItem.innerHTML = `Barcode: ${data.code}, Serial Number: ${data.serialNumber}, User: ${data.user}, Camera ID: ${data.cameraId}, ${formattedTimestamp} <a href="${url}" target="_blank">URL</a>`;
-            results.appendChild(listItem);
-          });
-
-          if (querySnapshot.empty) {
-            const listItem = document.createElement('li');
-            listItem.textContent = 'No results found';
-            results.appendChild(listItem);
+          if (barcode) {
+            q = query(q, where("code", ">=", barcode), where("code", "<=", barcode + "\uf8ff"), orderBy("code"), orderBy("serialNumber", "desc"));
+          } else if (serialNumber) {
+            q = query(q, where("serialNumber", "==", parseInt(serialNumber)), orderBy("serialNumber", "desc"));
+          } else if (searchUser) {
+            q = query(q, where("user", ">=", searchUser), where("user", "<=", searchUser + "\uf8ff"), orderBy("user"), orderBy("serialNumber", "desc"));
+          } else if (cameraId) {
+            q = query(q, where("cameraId", ">=", cameraId), where("cameraId", "<=", cameraId + "\uf8ff"), orderBy("cameraId"), orderBy("serialNumber", "desc"));
+          } else {
+            q = query(q, orderBy("serialNumber", "desc")); // デフォルトでserialNumberの降順
           }
-        } catch (e) {
-          console.error("Error searching documents: ", e);
-        }
-      });
+
+          // クエリにリミットを適用
+          q = query(q, limit(limitCount));
+
+          try {
+            const querySnapshot = await getDocs(q);
+            const results = document.getElementById('searchResults');
+            results.innerHTML = '';
+
+            querySnapshot.forEach((doc) => {
+              const data = doc.data();
+              const offsetTime = new Date(data.time.toMillis() - viewTimeOffset * 1000);
+              const url = generateCameraUrl(data.cameraId, offsetTime);
+              const formattedTimestamp = formatTimestamp(offsetTime);
+              const listItem = document.createElement('li');
+              listItem.innerHTML = `Barcode: ${data.code}, Serial Number: ${data.serialNumber}, User: ${data.user}, Camera ID: ${data.cameraId}, ${formattedTimestamp} <a href="${url}" target="_blank">URL</a>`;
+              results.appendChild(listItem);
+            });
+
+            if (querySnapshot.empty) {
+              const listItem = document.createElement('li');
+              listItem.textContent = 'No results found';
+              results.appendChild(listItem);
+            }
+          } catch (e) {
+            console.error("Error searching documents: ", e);
+          }
+        });
+      }
     }
   }
 });
