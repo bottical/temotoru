@@ -2,7 +2,7 @@ body {
     font-family: Arial, sans-serif;
     margin: 0;
     text-align: center; /* 中央揃え */
-    padding-top: 50px; /* ページ上部の余白を調整 */
+    padding-top: 100px; /* ページ上部の余白を調整 */
 }
 
 .search-container {
@@ -10,7 +10,7 @@ body {
     flex-direction: column; /* 縦方向に配置 */
     align-items: center;
     justify-content: center;
-    gap: 20px; /* ロゴとフォームの間の隙間を調整 */
+    gap: 100px; /* ロゴとフォームの間の隙間を調整 */
 }
 
 .form-container {
