@@ -11,21 +11,14 @@ body {
     width: 300px;
 }
 
-.search-container:focus {
-   outline: 0;
-    box-shadow: 0 0 0 2px rgb(33, 150, 243) inset;
-}
-
 .search-input {
     border: 2px solid #ccc;
-    align-items: center;
-    padding: 5px;
     border-radius: 5px;
+    padding: 5px;
     width: 300px;
 }
 
 .search-button {
-    background: none;
     border: 2px solid #ccc;
     cursor: pointer;
     padding: 5px;
