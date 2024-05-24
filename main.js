@@ -1,70 +1,6 @@
 // public/main.js
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-import { getFirestore, collection, addDoc, serverTimestamp, doc, runTransaction, query, where, getDocs, orderBy, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
-import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
-
-// Firebase configuration
-const firebaseConfig = {
-  apiKey: "AIzaSyA65o0WMcpDIfwttoaXAmDU5Rqe72h9gPo",
-  authDomain: "temotoru-neo.firebaseapp.com",
-  projectId: "temotoru-neo",
-  storageBucket: "temotoru-neo.appspot.com",
-  messagingSenderId: "126027037708",
-  appId: "1:126027037708:web:c82bc8037b53fcfa62c229"
-};
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app);
-
-// Utility functions
-async function getNextSequence(userId) {
-  const counterDocRef = doc(db, `users/${userId}/counters/barcodeCounter`);
-  try {
-    const nextId = await runTransaction(db, async (transaction) => {
-      const counterDoc = await transaction.get(counterDocRef);
-      if (!counterDoc.exists()) {
-        transaction.set(counterDocRef, { currentValue: 1 });
-        return 1;
-      }
-      const currentValue = counterDoc.data().currentValue;
-      const nextValue = currentValue + 1;
-      transaction.update(counterDocRef, { currentValue: nextValue });
-      return nextValue;
-    });
-    console.log("Next sequence ID: ", nextId);
-    return nextId;
-  } catch (e) {
-    console.error("Transaction failed: ", e);
-    return null;
-  }
-}
-
-async function getCameraId(userId, user) {
-  const cameraMappingRef = collection(db, `users/${userId}/cameraMapping`);
-  const q = query(cameraMappingRef, where("user", "==", user));
-  const querySnapshot = await getDocs(q);
-  if (!querySnapshot.empty) {
-    const cameraMapping = querySnapshot.docs[0].data();
-    return cameraMapping.cameraId;
-  } else {
-    throw new Error(`No camera mapping found for user ${user}`);
-  }
-}
-
-async function initializeUserData(userId) {
-  // Initialize user document
-  const userDocRef = doc(db, `users/${userId}`);
-  await setDoc(userDocRef, { initialized: true });
-
-  // Initialize subcollections
-  const barcodeDataRef = collection(db, `users/${userId}/barcodeData`);
-  await addDoc(barcodeDataRef, { initialized: true });
-
-  const cameraMappingRef = collection(db, `users/${userId}/cameraMapping`);
-  await addDoc(cameraMappingRef, { initialized: true });
-}
+import { db, auth, signIn, signOutUser, onAuthStateChangedListener, getNextSequence, getCameraId, initializeUserData, collection, addDoc, serverTimestamp, query, where, getDocs, orderBy, limit } from "./firebase.js";
+import { showElement, hideElement, updateUIOnAuthState, formatTimestamp } from "./ui.js";
 
 function generateCameraUrl(cameraId, time) {
   const baseUrl = "https://safie.link/app/streaming/";
@@ -72,181 +8,117 @@ function generateCameraUrl(cameraId, time) {
   return `${baseUrl}${cameraId}?timestamp=${timestamp}`;
 }
 
-function formatTimestamp(time) {
-  const year = time.getFullYear();
-  const month = String(time.getMonth() + 1).padStart(2, '0');
-  const day = String(time.getDate()).padStart(2, '0');
-  const hours = String(time.getHours()).padStart(2, '0');
-  const minutes = String(time.getMinutes()).padStart(2, '0');
-  const seconds = String(time.getSeconds()).padStart(2, '0');
-  return `${year}年${month}月${day}日${hours}:${minutes}:${seconds}`;
-}
-
-function updateUIOnAuthState(user) {
-  console.log("updateUIOnAuthState called with user:", user); // デバッグ用ログ
-  const path = window.location.pathname;
-  const loginForm = document.getElementById('loginForm');
-  const logoutButton = document.getElementById('logoutButton');
-  const barcodeForm = document.getElementById('barcodeForm');
-  const searchForm = document.getElementById('searchForm');
-  const searchResults = document.getElementById('searchResults');
-
-  console.log("Current path:", path); // デバッグ用ログ
-
-  if (user) {
-    console.log("User is logged in"); // デバッグ用ログ
-    if (path.endsWith('index.html') && barcodeForm) {
-      console.log("Displaying barcodeForm"); // デバッグ用ログ
-      barcodeForm.style.display = 'block';
-      if (searchForm) searchForm.style.display = 'none';
-    } else if (path.endsWith('search.html') && searchForm) {
-      console.log("Displaying searchForm"); // デバッグ用ログ
-      searchForm.style.display = 'block';
-      if (barcodeForm) barcodeForm.style.display = 'none';
-    }
-    if (loginForm) loginForm.style.display = 'none';
-    if (logoutButton) logoutButton.style.display = 'block';
-  } else {
-    console.log("User is not logged in"); // デバッグ用ログ
-    if (barcodeForm) barcodeForm.style.display = 'none';
-    if (searchForm) searchForm.style.display = 'none';
-    if (loginForm) loginForm.style.display = 'block';
-    if (logoutButton) logoutButton.style.display = 'none';
-    if (searchResults) searchResults.innerHTML = ''; // Clear search results
-  }
-}
-
-// Event listeners
 document.getElementById('loginForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const email = document.getElementById('email').value;
   const password = document.getElementById('password').value;
 
   try {
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    const user = userCredential.user;
-
-    // Initialize user data if new user
-    const userDocRef = doc(db, `users/${user.uid}`);
-    const userDoc = await getDoc(userDocRef);
-    if (!userDoc.exists()) {
-      await initializeUserData(user.uid);
-    }
-
-    console.log("User signed in successfully");
+    await signIn(email, password);
   } catch (error) {
-    console.error("Error signing in: ", error.code, error.message);
+    console.error("Login failed:", error);
   }
 });
 
 document.getElementById('logoutButton').addEventListener('click', async () => {
   try {
-    await signOut(auth);
-    console.log("User signed out successfully");
+    await signOutUser();
   } catch (error) {
-    console.error("Error signing out: ", error);
+    console.error("Logout failed:", error);
   }
 });
 
-onAuthStateChanged(auth, (user) => {
-  console.log("onAuthStateChanged triggered"); // デバッグ用ログ
-  updateUIOnAuthState(user);
+onAuthStateChangedListener((user) => {
+  const path = window.location.pathname;
+  updateUIOnAuthState(user, path);
+
   if (user) {
-    const path = window.location.pathname;
-    if (path.endsWith('index.html')) {
-      // Attach barcode form event listener
+    if (path.endsWith('index.html') || path === '/temotoru/') {
       const barcodeForm = document.getElementById('barcodeForm');
-      if (barcodeForm) {
-        barcodeForm.addEventListener('submit', async (e) => {
-          e.preventDefault();
-          const barcode = document.getElementById('barcodeInput').value;
-          console.log("Barcode input:", barcode); // デバッグログ
-          const userId = user.uid;
-          const userEmail = user.email;
-          const userCompany = "Your Company Name"; // 企業名、任意で設定
-          const barcodeUser = barcode.slice(-5);
-          const pureBarcode = barcode.slice(0, -5); // ユーザー情報を除いた部分
-          const currentTime = new Date();
+      barcodeForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const barcode = document.getElementById('barcodeInput').value;
+        const userId = user.uid;
+        const barcodeUser = barcode.slice(-5);
+        const pureBarcode = barcode.slice(0, -5); // ユーザー情報を除いた部分
+        const currentTime = new Date();
 
-          try {
-            const cameraId = await getCameraId(userId, barcodeUser);
-            const url = generateCameraUrl(cameraId, currentTime);
-            const serialNumber = await getNextSequence(userId);
+        try {
+          const cameraId = await getCameraId(userId, barcodeUser);
+          const url = generateCameraUrl(cameraId, currentTime);
+          const serialNumber = await getNextSequence(userId);
 
-            if (serialNumber === null) {
-              console.error("Failed to get the next sequence ID.");
-              return;
-            }
-
-            const docRef = await addDoc(collection(db, `users/${userId}/barcodeData`), {
-              code: pureBarcode,
-              serialNumber: serialNumber, // 連番フィールド
-              time: serverTimestamp(),
-              user: barcodeUser,
-              cameraId: cameraId,
-              userEmail: userEmail,
-              userCompany: userCompany
-            });
-            console.log("Document written with ID: ", docRef.id); // デバッグログ
-            document.getElementById('barcodeInput').value = '';
-          } catch (e) {
-            console.error("Error adding document: ", e); // エラーログ
+          if (serialNumber === null) {
+            console.error("Failed to get the next sequence ID.");
+            return;
           }
-        });
-      }
+
+          const docRef = await addDoc(collection(db, `users/${userId}/barcodeData`), {
+            code: pureBarcode,
+            serialNumber: serialNumber, // 連番フィールド
+            time: serverTimestamp(),
+            user: barcodeUser,
+            cameraId: cameraId,
+            userEmail: user.email,
+            userCompany: "Your Company Name" // 企業名、任意で設定
+          });
+          console.log("Document written with ID: ", docRef.id); // デバッグログ
+          document.getElementById('barcodeInput').value = '';
+        } catch (e) {
+          console.error("Error adding document: ", e); // エラーログ
+        }
+      });
     } else if (path.endsWith('search.html')) {
-      // Attach search form event listener
       const searchForm = document.getElementById('searchForm');
-      if (searchForm) {
-        searchForm.addEventListener('submit', async (e) => {
-          e.preventDefault();
-          const barcode = document.getElementById('searchBarcode').value;
-          const serialNumber = document.getElementById('searchSerialNumber').value;
-          const searchUser = document.getElementById('searchUser').value;
-          const cameraId = document.getElementById('searchCameraId').value;
-          const viewTimeOffset = parseInt(document.getElementById('viewTimeOffset').value, 10) || 0;
-          const userId = user.uid;
+      searchForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const barcode = document.getElementById('searchBarcode').value;
+        const serialNumber = document.getElementById('searchSerialNumber').value;
+        const searchUser = document.getElementById('searchUser').value;
+        const cameraId = document.getElementById('searchCameraId').value;
+        const viewTimeOffset = parseInt(document.getElementById('viewTimeOffset').value, 10) || 0;
+        const userId = user.uid;
+        const limitCount = 10; // 表示件数の制限
 
-          const barcodeDataRef = collection(db, `users/${userId}/barcodeData`);
-          let q = query(barcodeDataRef);
+        const barcodeDataRef = collection(db, `users/${userId}/barcodeData`);
+        let q = query(barcodeDataRef);
 
-          if (barcode) {
-            q = query(q, where("code", ">=", barcode), where("code", "<=", barcode + "\uf8ff"), orderBy("code"), orderBy("serialNumber", "desc"));
-          } else if (serialNumber) {
-            q = query(q, where("serialNumber", "==", parseInt(serialNumber)), orderBy("serialNumber", "desc"));
-          } else if (searchUser) {
-            q = query(q, where("user", ">=", searchUser), where("user", "<=", searchUser + "\uf8ff"), orderBy("user"), orderBy("serialNumber", "desc"));
-          } else if (cameraId) {
-            q = query(q, where("cameraId", ">=", cameraId), where("cameraId", "<=", cameraId + "\uf8ff"), orderBy("cameraId"), orderBy("serialNumber", "desc"));
-          } else {
-            q = query(q, orderBy("serialNumber", "desc")); // デフォルトでserialNumberの降順
+        if (barcode) {
+          q = query(q, where("code", ">=", barcode), where("code", "<=", barcode + "\uf8ff"), orderBy("code"), orderBy("serialNumber", "desc"), limit(limitCount));
+        } else if (serialNumber) {
+          q = query(q, where("serialNumber", "==", parseInt(serialNumber)), orderBy("serialNumber", "desc"), limit(limitCount));
+        } else if (searchUser) {
+          q = query(q, where("user", ">=", searchUser), where("user", "<=", searchUser + "\uf8ff"), orderBy("user"), orderBy("serialNumber", "desc"), limit(limitCount));
+        } else if (cameraId) {
+          q = query(q, where("cameraId", ">=", cameraId), where("cameraId", "<=", cameraId + "\uf8ff"), orderBy("cameraId"), orderBy("serialNumber", "desc"), limit(limitCount));
+        } else {
+          q = query(q, orderBy("serialNumber", "desc"), limit(limitCount)); // デフォルトでserialNumberの降順
+        }
+
+        try {
+          const querySnapshot = await getDocs(q);
+          const results = document.getElementById('searchResults');
+          results.innerHTML = '';
+
+          querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            const offsetTime = new Date(data.time.toMillis() - viewTimeOffset * 1000);
+            const url = generateCameraUrl(data.cameraId, offsetTime);
+            const formattedTimestamp = formatTimestamp(offsetTime);
+            const listItem = document.createElement('li');
+            listItem.innerHTML = `Barcode: ${data.code}, Serial Number: ${data.serialNumber}, User: ${data.user}, Camera ID: ${data.cameraId}, ${formattedTimestamp} <a href="${url}" target="_blank">URL</a>`;
+            results.appendChild(listItem);
+          });
+
+          if (querySnapshot.empty) {
+            const listItem = document.createElement('li');
+            listItem.textContent = 'No results found';
+            results.appendChild(listItem);
           }
-
-          try {
-            const querySnapshot = await getDocs(q);
-            const results = document.getElementById('searchResults');
-            results.innerHTML = '';
-
-            querySnapshot.forEach((doc) => {
-              const data = doc.data();
-              const offsetTime = new Date(data.time.toMillis() - viewTimeOffset * 1000);
-              const url = generateCameraUrl(data.cameraId, offsetTime);
-              const formattedTimestamp = formatTimestamp(offsetTime);
-              const listItem = document.createElement('li');
-              listItem.innerHTML = `Barcode: ${data.code}, Serial Number: ${data.serialNumber}, User: ${data.user}, Camera ID: ${data.cameraId}, ${formattedTimestamp} <a href="${url}" target="_blank">URL</a>`;
-              results.appendChild(listItem);
-            });
-
-            if (querySnapshot.empty) {
-              const listItem = document.createElement('li');
-              listItem.textContent = 'No results found';
-              results.appendChild(listItem);
-            }
-          } catch (e) {
-            console.error("Error searching documents: ", e);
-          }
-        });
-      }
+        } catch (e) {
+          console.error("Error searching documents: ", e);
+        }
+      });
     }
   }
 });
