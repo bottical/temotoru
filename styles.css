@@ -55,3 +55,40 @@ body {
     display: block;
     margin-top: 300px; /* フォームとリンクの間の隙間を調整 */
 }
+
+
+/* styles.cssに以下のスタイルを追加 */
+.modal {
+  display: none; /* デフォルトでは非表示 */
+  position: fixed; /* 固定表示 */
+  z-index: 1; /* 最前面に表示 */
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto; /* 必要に応じてスクロール可能 */
+  background-color: rgba(0, 0, 0, 0.4); /* 半透明の背景色 */
+}
+
+.modal-content {
+  background-color: #fefefe;
+  margin: 15% auto; /* 中央に配置 */
+  padding: 20px;
+  border: 1px solid #888;
+  width: 80%; /* 幅を調整 */
+}
+
+.close-button {
+  color: #aaa;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+}
+
+.close-button:hover,
+.close-button:focus {
+  color: black;
+  text-decoration: none;
+  cursor: pointer;
+}
+
