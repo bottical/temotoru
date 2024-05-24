@@ -22,6 +22,7 @@ body {
 .search-button {
     background: none;
     border: none;
+    border-left:solid 10px;
     cursor: pointer;
     padding: 5px;
 }
