@@ -8,6 +8,28 @@ function generateCameraUrl(cameraId, time) {
   return `${baseUrl}${cameraId}?timestamp=${timestamp}`;
 }
 
+// モーダルを表示する関数
+function showErrorModal(message) {
+  const modal = document.getElementById('errorModal');
+  const errorMessage = document.getElementById('errorMessage');
+  errorMessage.textContent = message;
+  modal.style.display = 'block';
+}
+
+// モーダルを閉じるボタンの処理
+document.querySelector('.close-button').addEventListener('click', () => {
+  const modal = document.getElementById('errorModal');
+  modal.style.display = 'none';
+});
+
+// モーダルの外側をクリックしたときに閉じる処理
+window.addEventListener('click', (event) => {
+  const modal = document.getElementById('errorModal');
+  if (event.target == modal) {
+    modal.style.display = 'none';
+  }
+});
+
 document.getElementById('loginForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const email = document.getElementById('email').value;
@@ -37,7 +59,7 @@ onAuthStateChangedListener((user) => {
     if (path.endsWith('index.html') || path === '/temotoru/') {
       const barcodeForm = document.getElementById('barcodeForm');
       if (barcodeForm) {
-      　showElement(barcodeForm);
+        showElement(barcodeForm);
         document.getElementById('barcodeInput').focus(); // フォーカスを設定
         barcodeForm.addEventListener('submit', async (e) => {
           e.preventDefault();
@@ -70,6 +92,7 @@ onAuthStateChangedListener((user) => {
             document.getElementById('barcodeInput').value = '';
           } catch (e) {
             console.error("Error adding document: ", e); // エラーログ
+            showErrorModal(`エラー: ユーザー ${barcodeUser} のカメラマッピングが見つかりません`);
           }
         });
       }
