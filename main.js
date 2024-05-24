@@ -139,6 +139,10 @@ onAuthStateChangedListener((user) => {
             const results = document.getElementById('searchResults');
             results.innerHTML = ''; // 既存の結果をクリア
 
+            // コンテナ要素を追加
+            const container = document.createElement('div');
+            container.className = 'result-table-container';
+
             // テーブルのヘッダーを追加
             const table = document.createElement('table');
             table.className = 'result-table';
@@ -172,7 +176,8 @@ onAuthStateChangedListener((user) => {
             });
 
             table.appendChild(tbody);
-            results.appendChild(table);
+            container.appendChild(table);
+            results.appendChild(container);
 
             if (querySnapshot.empty) {
               const noResults = document.createElement('p');
