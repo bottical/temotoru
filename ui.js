@@ -1,6 +1,6 @@
 // public/ui.js
 export function showElement(element) {
-  if (element) element.style.display = 'block';
+  if (element) element.style.display = 'none';
 }
 
 export function hideElement(element) {
