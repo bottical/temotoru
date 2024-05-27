@@ -1,3 +1,12 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
 <form id="loginForm" style="display:block;" data-default-display="block">
     <input type="email" id="email" placeholder="Email" required>
     <input type="password" id="password" placeholder="Password" required>
@@ -22,3 +31,14 @@
 <Div Align="right">
     <button id="logoutButton" style="display:none;" data-default-display="inline-block">Logout</button>    
 </Div>
+    
+    <script type="module" src="main.js"></script>
+    <!-- search.htmlに以下のモーダルHTMLを追加 -->
+    <div id="errorModal" class="modal">
+      <div class="modal-content">
+        <span class="close-button">&times;</span>
+        <p id="errorMessage"></p>
+      </div>
+    </div>
+</body>
+</html>
