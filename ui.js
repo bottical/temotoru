@@ -1,6 +1,8 @@
-// public/ui.js
 export function showElement(element) {
-  if (element) element.style.display = 'block';
+  if (element) {
+    const defaultDisplay = element.getAttribute('data-default-display') || 'block';
+    element.style.display = defaultDisplay;
+  }
 }
 
 export function hideElement(element) {
