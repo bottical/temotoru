@@ -1,7 +1,6 @@
 body {
     font-family: Arial, sans-serif;
     margin: 0;
-    text-align: center; /* 中央揃え */
     padding-top: 100px; /* ページ上部の余白を調整 */
 }
 
@@ -53,7 +52,7 @@ body {
 /* 新しいスタイルを追加して隙間を調整 */
 #searchPageLink {
     display: inline-block; /* インラインブロックに設定して幅をテキストに合わせる */
-    margin-top: 20px; /* フォームとリンクの間の隙間を調整 */
+    margin-top: 100px; /* フォームとリンクの間の隙間を調整 */
     padding: 5px 10px; /* クリックしやすいようにパディングを追加 */
     text-decoration: none; /* リンクの下線を除去 */
     color: #007BFF; /* リンクの色を設定 */
