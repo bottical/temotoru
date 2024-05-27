@@ -81,7 +81,7 @@ export async function initializeUserData(userId) {
   const cameraMappingDocRef = await addDoc(cameraMappingRef, { initialized: true });
 
   // mappingid サブコレクションの作成
-  const mappingIdRef = collection(cameraMappingDocRef, 'mappingid');
+  const mappingIdRef = collection(cameraMappingDocRef, 'mappingId');
   await addDoc(mappingIdRef, {
     cameraId: "",
     user: ""
