@@ -78,10 +78,10 @@ export async function initializeUserData(userId) {
   await addDoc(barcodeDataRef, { initialized: true });
 
   const cameraMappingRef = collection(db, `users/${userId}/cameraMapping`);
-  await addDoc(cameraMappingRef, { initialized: true });
+  const cameraMappingDocRef = await addDoc(cameraMappingRef, { initialized: true });
 
-  // mappingId コレクションの作成
-  const mappingIdRef = collection(db, `users/${userId}/cameraMapping/mappingId`);
+  // cameraMapping ドキュメントの中に mappingId サブコレクションの作成
+  const mappingIdRef = collection(doc(db, `users/${userId}/cameraMapping/${cameraMappingDocRef.id}`), 'mappingId');
   await addDoc(mappingIdRef, {
     cameraId: "",
     user: ""
