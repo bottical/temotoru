@@ -14,7 +14,7 @@ body {
 
 .search-container2 {
     display: flex;
-    flex-direction: column; /* 縦方向に配置 */
+    flex-direction: row; /* 縦方向に配置 */
     align-items: center;
     justify-content: center;
 }
@@ -76,7 +76,7 @@ body {
 
 #inputPageLink {
     display: inline-block;
-    margin-top: 20px; /* フォームとリンクの間の隙間を調整 */
+    margin-top: 80px; /* フォームとリンクの間の隙間を調整 */
     padding: 5px 10px; /* クリックしやすいようにパディングを追加 */
     text-decoration: none; /* リンクの下線を除去 */
     color: #007BFF; /* リンクの色を設定 */
