@@ -1,6 +1,6 @@
 // public/ui.js
 export function showElement(element) {
-  if (element) element.style.display = 'inline-block';
+  if (element) element.style.display = 'block';
 }
 
 export function hideElement(element) {
