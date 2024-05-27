@@ -15,15 +15,16 @@
 
 <form id="searchForm" style="display:block;" data-default-display="block">
     <div class="search-container2">
-    <h2>撮影動画検索</h2>
+    <h1>撮影動画検索</h1>
       <div class="form-container2">
-        <input type="text" id="searchBarcode" placeholder="Search by バーコード">
+        <input type="text" id="searchBarcode" placeholder="Search by バーコード※1">
         <input type="text" id="searchSerialNumber" placeholder="Search by 撮影ID">
         <input type="text" id="searchUser" placeholder="Search by ユーザー">
         <input type="text" id="searchCameraId" placeholder="Search by カメラID">
-        <input type="number" id="viewTimeOffset" placeholder="秒数オフセット※">
+        <input type="number" id="viewTimeOffset" placeholder="秒数オフセット※2">
         <button type="submit">Search</button>
        </div>
+        <h5>※1バーコード検索は前方一致対応　※2動画の再生位置を変更できます。例）入力値:5→バーコード読取りの5秒前から再生</h1>
     </div>
 </form>
 
