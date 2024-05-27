@@ -61,14 +61,14 @@ body {
 .search-input2 {
     border: 2px solid #ccc;
     border-radius: 5px;
-    padding: 10px;
+    padding: 5px;
 }
 
 .search-button2 {
     border-radius: 5px;
     border: none;
     cursor: pointer;
-    padding: 10px;
+    padding: 5px;
     color: #FFF;
     transition: 0.3s ease-in-out;
     font-weight: 600;
