@@ -57,12 +57,21 @@ body {
     background: rgb(117,188,255);
     background: linear-gradient(270deg, rgba(117,188,255,1) 0%, rgba(62,159,252,1) 100%);
 }
-
-.search-button img {
-    width: 20px;
-    height: 20px;
+.search-button2 {
+    border-radius: 5px;
+    border: none;
+    cursor: pointer;
+    padding: 10px;
+    color: #FFF;
+    transition: 0.3s ease-in-out;
+    font-weight: 600;
+    background: rgb(149,202,252);
+    background: linear-gradient(270deg, rgba(149,202,252,1) 0%, rgba(107,182,255,1) 100%);
 }
 
+.search-button2:hover {
+    background: rgb(117,188,255);
+    background: linear-gradient(270deg, rgba(117,188,255,1) 0%, rgba(62,159,252,1) 100%);
 /* 新しいスタイルを追加して隙間を調整 */
 #searchPageLink {
     display: inline-block; /* インラインブロックに設定して幅をテキストに合わせる */
