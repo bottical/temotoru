@@ -12,14 +12,21 @@ body {
     gap: 150px; /* ロゴとフォームの間の隙間を調整 */
 }
 
+.form-container {
+    display: flex;
+    flex-direction: row; /* 横並びに配置 */
+    align-items: center;
+    justify-content: center;
+    gap: 10px; /* フォームとボタンの間の隙間を調整 */
+}
+
 .search-container2 {
     display: flex;
-    flex-direction: row; /* 縦方向に配置 */
+    flex-direction: column; /* 縦方向に配置 */
     align-items: center;
     justify-content: center;
 }
-
-.form-container {
+.form-container2 {
     display: flex;
     flex-direction: row; /* 横並びに配置 */
     align-items: center;
