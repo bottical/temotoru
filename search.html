@@ -1,44 +1,24 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Search</title>
-    <link rel="stylesheet" href="styles.css">
-</head>
-<body>
-    <form id="loginForm">
-        <input type="email" id="email" placeholder="Email" required>
-        <input type="password" id="password" placeholder="Password" required>
-        <button type="submit">Login</button>
-    </form>
+<form id="loginForm" style="display:block;" data-default-display="block">
+    <input type="email" id="email" placeholder="Email" required>
+    <input type="password" id="password" placeholder="Password" required>
+    <button type="submit">Login</button>
+</form>
 
-    <form id="searchForm" style="display:none;">
-        <h2>撮影動画検索</h2>
-        <input type="text" id="searchBarcode" placeholder="Search by バーコード">
-        <input type="text" id="searchSerialNumber" placeholder="Search by 撮影ID">
-        <input type="text" id="searchUser" placeholder="Search by ユーザー">
-        <input type="text" id="searchCameraId" placeholder="Search by カメラID">
-        <input type="number" id="viewTimeOffset" placeholder="秒数オフセット※">
-        <button type="submit">Search</button>
-    </form>
+<form id="searchForm" style="display:none;" data-default-display="block">
+    <h2>撮影動画検索</h2>
+    <input type="text" id="searchBarcode" placeholder="Search by バーコード">
+    <input type="text" id="searchSerialNumber" placeholder="Search by 撮影ID">
+    <input type="text" id="searchUser" placeholder="Search by ユーザー">
+    <input type="text" id="searchCameraId" placeholder="Search by カメラID">
+    <input type="number" id="viewTimeOffset" placeholder="秒数オフセット※">
+    <button type="submit">Search</button>
+</form>
 
-    <div id="searchResults"></div>
+<div id="searchResults"></div>
 
-    <!-- 入力ページへのリンク -->
-    <a id="inputPageLink" href="index.html" style="searchPageLink" >バーコード入力ページへ移動</a>
+<!-- 入力ページへのリンク -->
+<a id="inputPageLink" href="index.html" style="display:none;" data-default-display="inline-block">バーコード入力ページへ移動</a>
 
 <Div Align="right">
-    <button id="logoutButton" style="display:none;">Logout</button>    
+    <button id="logoutButton" style="display:none;" data-default-display="inline-block">Logout</button>    
 </Div>
-    
-    <script type="module" src="main.js"></script>
-    <!-- search.htmlに以下のモーダルHTMLを追加 -->
-    <div id="errorModal" class="modal">
-      <div class="modal-content">
-        <span class="close-button">&times;</span>
-        <p id="errorMessage"></p>
-      </div>
-    </div>
-</body>
-</html>
