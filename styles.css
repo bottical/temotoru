@@ -179,3 +179,7 @@ body {
 .result-table tr:hover {
   background-color: #ddd;
 }
+
+#loginForm {
+  display: none;
+}
