@@ -112,6 +112,15 @@ export async function signOutUser() {
   }
 }
 
+export async function mapUserToCamera(userId, user, cameraId) {
+  const cameraMappingRef = doc(db, `users/${userId}/cameraMapping/${user}`);
+  await setDoc(cameraMappingRef, {
+    cameraId: cameraId,
+    user: user
+  });
+  console.log(`Mapped user ${user} to camera ID ${cameraId}`);
+}
+
 export function onAuthStateChangedListener(callback) {
   onAuthStateChanged(auth, callback);
 }
