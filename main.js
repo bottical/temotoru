@@ -75,32 +75,47 @@ onAuthStateChangedListener((user) => {
           const pureBarcode = barcode.slice(0, -5); // ユーザー情報を除いた部分
           const currentTime = new Date();
 
-          try {
-            const cameraId = await getCameraId(userId, barcodeUser);
-            const url = generateCameraUrl(cameraId, currentTime);
-            const serialNumber = await getNextSequence(userId);
+async function addBarcodeData(userId, pureBarcode, serialNumber, barcodeUser, cameraId, userEmail) {
+    return addDoc(collection(db, `users/${userId}/barcodeData`), {
+        code: pureBarcode,
+        serialNumber: serialNumber,
+        time: serverTimestamp(),
+        user: barcodeUser,
+        cameraId: cameraId,
+        userEmail: userEmail,
+        userCompany: "Your Company Name"
+    });
+}
 
-            if (serialNumber === null) {
-              console.error("Failed to get the next sequence ID.");
-              return;
-            }
+barcodeForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const barcode = document.getElementById('barcodeInput').value;
+    document.getElementById('barcodeInput').value = ''; // UI の反応を即時化
+    const userId = auth.currentUser.uid;
+    const barcodeUser = barcode.slice(-5);
+    const pureBarcode = barcode.slice(0, -5);
 
-            const docRef = await addDoc(collection(db, `users/${userId}/barcodeData`), {
-              code: pureBarcode,
-              serialNumber: serialNumber, // 連番フィールド
-              time: serverTimestamp(),
-              user: barcodeUser,
-              cameraId: cameraId,
-              userEmail: user.email,
-              userCompany: "Your Company Name" // 企業名、任意で設定
-            });
-            console.log("Document written with ID: ", docRef.id); // デバッグログ
-            document.getElementById('barcodeInput').value = '';
-          } catch (e) {
-            console.error("Error adding document: ", e); // エラーログ
-            showErrorModal(`エラー: ユーザー ${barcodeUser} のカメラマッピングが見つかりません`);
-          }
-        });
+    try {
+        const [cameraId, serialNumber] = await Promise.all([
+            getCameraId(userId, barcodeUser),
+            getNextSequence(userId)
+        ]);
+
+        if (!serialNumber) {
+            throw new Error("シリアル番号取得失敗");
+        }
+
+        // Firestore 書き込みを非同期実行（処理をブロックしない）
+        addBarcodeData(userId, pureBarcode, serialNumber, barcodeUser, cameraId, auth.currentUser.email)
+            .then((docRef) => console.log("データ追加成功: ", docRef.id))
+            .catch((e) => console.error("データ追加エラー: ", e));
+
+    } catch (e) {
+        console.error("エラー発生: ", e);
+        showErrorModal(`エラー: ${e.message}`);
+    }
+});
+
       }
     } else if (path.endsWith('search.html')) {
       const searchForm = document.getElementById('searchForm');
