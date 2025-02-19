@@ -53,6 +53,40 @@ document.getElementById('logoutButton').addEventListener('click', async () => {
   }
 });
 
+// モーダルを表示し、一定時間後に自動で閉じる関数
+function showErrorModal(message) {
+    const modal = document.getElementById('errorModal');
+    const errorMessage = document.getElementById('errorMessage');
+    errorMessage.textContent = message;
+    modal.style.display = 'block';
+
+    // 2秒後に自動でモーダルを閉じる
+    setTimeout(() => {
+        hideErrorModal();
+    }, 1000);
+}
+
+// モーダルを閉じる関数（フォーカスも戻す）
+function hideErrorModal() {
+    const modal = document.getElementById('errorModal');
+    modal.style.display = 'none';
+
+    // フォーカスを `barcodeInput` に戻す
+    const barcodeInput = document.getElementById('barcodeInput');
+    if (barcodeInput) {
+        barcodeInput.focus();
+    }
+}
+
+// Enterキーを押したらモーダルを閉じる
+document.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+        hideErrorModal();
+    }
+});
+
+
+
 // Firestore 書き込みを非同期化する関数
 async function addBarcodeData(userId, pureBarcode, serialNumber, barcodeUser, cameraId, userEmail) {
     return addDoc(collection(db, `users/${userId}/barcodeData`), {
@@ -97,7 +131,7 @@ onAuthStateChangedListener((user) => {
                         ]);
 
                         if (!serialNumber) {
-                            throw new Error("シリアル番号取得失敗");
+                            throw new Error(`エラー: No camera mapping found for user ${barcodeUser}`);
                         }
 
                         // Firestore 書き込みを非同期実行
