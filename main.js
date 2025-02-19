@@ -8,13 +8,7 @@ function generateCameraUrl(cameraId, time) {
   return `${baseUrl}${cameraId}?timestamp=${timestamp}`;
 }
 
-// モーダルを表示する関数
-function showErrorModal(message) {
-  const modal = document.getElementById('errorModal');
-  const errorMessage = document.getElementById('errorMessage');
-  errorMessage.textContent = message;
-  modal.style.display = 'block';
-}
+
 
 // モーダルを閉じる関数
 function hideErrorModal() {
