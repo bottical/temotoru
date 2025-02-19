@@ -53,28 +53,7 @@ document.getElementById('logoutButton').addEventListener('click', async () => {
   }
 });
 
-onAuthStateChangedListener((user) => {
-  const path = window.location.pathname;
-  console.log('Auth state changed, current path:', path);
-  updateUIOnAuthState(user, path);
-
-  // ページがロードされた際にモーダルをリセット
-  hideErrorModal();
-
-  if (user) {
-    if (path.endsWith('index.html') || path === '/temotoru/') {
-      const barcodeForm = document.getElementById('barcodeForm');
-      if (barcodeForm) {
-        showElement(barcodeForm);
-        document.getElementById('barcodeInput').focus(); // フォーカスを設定
-        barcodeForm.addEventListener('submit', async (e) => {
-          e.preventDefault();
-          const barcode = document.getElementById('barcodeInput').value;
-          const userId = user.uid;
-          const barcodeUser = barcode.slice(-5);
-          const pureBarcode = barcode.slice(0, -5); // ユーザー情報を除いた部分
-          const currentTime = new Date();
-
+// Firestore 書き込みを非同期化する関数を最初に定義（関数の外に置く）
 async function addBarcodeData(userId, pureBarcode, serialNumber, barcodeUser, cameraId, userEmail) {
     return addDoc(collection(db, `users/${userId}/barcodeData`), {
         code: pureBarcode,
@@ -87,33 +66,52 @@ async function addBarcodeData(userId, pureBarcode, serialNumber, barcodeUser, ca
     });
 }
 
-barcodeForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const barcode = document.getElementById('barcodeInput').value;
-    document.getElementById('barcodeInput').value = ''; // UI の反応を即時化
-    const userId = auth.currentUser.uid;
-    const barcodeUser = barcode.slice(-5);
-    const pureBarcode = barcode.slice(0, -5);
+onAuthStateChangedListener((user) => {
+  const path = window.location.pathname;
+  console.log('Auth state changed, current path:', path);
+  updateUIOnAuthState(user, path);
 
-    try {
-        const [cameraId, serialNumber] = await Promise.all([
-            getCameraId(userId, barcodeUser),
-            getNextSequence(userId)
-        ]);
+  // ページがロードされた際にモーダルをリセット
+  hideErrorModal();
 
-        if (!serialNumber) {
-            throw new Error("シリアル番号取得失敗");
+if (user) {
+    if (path.endsWith('index.html') || path === '/temotoru/') {
+        const barcodeForm = document.getElementById('barcodeForm');
+        if (barcodeForm) {
+            showElement(barcodeForm);
+            document.getElementById('barcodeInput').focus(); // フォーカスを設定
+
+            barcodeForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const barcode = document.getElementById('barcodeInput').value;
+                document.getElementById('barcodeInput').value = ''; // UI の反応を即時化
+                const userId = user.uid;
+                const barcodeUser = barcode.slice(-5);
+                const pureBarcode = barcode.slice(0, -5);
+
+                try {
+                    const [cameraId, serialNumber] = await Promise.all([
+                        getCameraId(userId, barcodeUser),
+                        getNextSequence(userId)
+                    ]);
+
+                    if (!serialNumber) {
+                        throw new Error("シリアル番号取得失敗");
+                    }
+
+                    // Firestore 書き込みを非同期実行（処理をブロックしない）
+                    addBarcodeData(userId, pureBarcode, serialNumber, barcodeUser, cameraId, auth.currentUser.email)
+                        .then((docRef) => console.log("データ追加成功: ", docRef.id))
+                        .catch((e) => console.error("データ追加エラー: ", e));
+
+                } catch (e) {
+                    console.error("エラー発生: ", e);
+                    showErrorModal(`エラー: ${e.message}`);
+                }
+            });
         }
-
-        // Firestore 書き込みを非同期実行（処理をブロックしない）
-        addBarcodeData(userId, pureBarcode, serialNumber, barcodeUser, cameraId, auth.currentUser.email)
-            .then((docRef) => console.log("データ追加成功: ", docRef.id))
-            .catch((e) => console.error("データ追加エラー: ", e));
-
-    } catch (e) {
-        console.error("エラー発生: ", e);
-        showErrorModal(`エラー: ${e.message}`);
     }
+}
 });
 
       }
