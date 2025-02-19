@@ -114,7 +114,7 @@ if (user) {
 }
 });
 
-      }
+      
     } else if (path.endsWith('search.html')) {
       const searchForm = document.getElementById('searchForm');
       if (searchForm) {
