@@ -9,13 +9,6 @@ function generateCameraUrl(cameraId, time) {
 }
 
 
-
-// モーダルを閉じる関数
-function hideErrorModal() {
-  const modal = document.getElementById('errorModal');
-  modal.style.display = 'none';
-}
-
 // モーダルを閉じるボタンの処理
 document.querySelector('.close-button').addEventListener('click', hideErrorModal);
 
