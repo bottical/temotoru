@@ -125,7 +125,7 @@ onAuthStateChangedListener((user) => {
           const cameraId = document.getElementById('searchCameraId').value;
           const viewTimeOffset = parseInt(document.getElementById('viewTimeOffset').value, 10) || 0;
           const userId = user.uid;
-          const limitCount = 10; // 表示件数の制限
+          const limitCount = 20; // 表示件数の制限
 
           const barcodeDataRef = collection(db, `users/${userId}/barcodeData`);
           let q = query(barcodeDataRef);
