@@ -110,6 +110,13 @@ async function addBarcodeData(userId, pureBarcode, serialNumber, barcodeUser, ca
     });
 }
 
+onAuthStateChanged(auth, (user) => {
+  if (!user) {
+    alert("セッションが切れました。再ログインしてください。");
+    location.href = "/login.html"; // ログインページが異なる場合は調整
+  }
+});
+
 onAuthStateChangedListener((user) => {
     const path = window.location.pathname;
     console.log('Auth state changed, current path:', path);
@@ -135,8 +142,15 @@ onAuthStateChangedListener((user) => {
                         showErrorModal("バーコードが不完全です（無視されました）");
                         return;
                     }
+                    // セッション確認をここに挿入
+                      if (!auth.currentUser) {
+                      showErrorModal("セッションが切れています。再ログインしてください。");
+                      return;
+                    }
+
+                  
                     document.getElementById('barcodeInput').value = ''; // UI を即座にクリア
-                    const userId = user.uid;
+                    const userId = currentUser.uid;
                     const barcodeUser = barcode.slice(-5);
                     const pureBarcode = barcode.slice(0, -5);
 
@@ -270,3 +284,19 @@ async function getCameraMappings(userId) {
   });
   return map;
 }
+
+//  アクセストークンの手動更新（55分ごと）
+setInterval(() => {
+  const user = auth.currentUser;
+  if (user) {
+    user.getIdToken(true)
+      .then(() => {
+        console.log("アクセストークンを更新しました");
+      })
+      .catch((err) => {
+        console.error("アクセストークンの更新失敗:", err);
+        alert("セッションの延長に失敗しました。再ログインしてください。");
+        location.href = "/login.html"; // 遷移先が違う場合は適宜調整
+      });
+  }
+}, 55 * 60 * 1000); // 55分ごと
