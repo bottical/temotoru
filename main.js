@@ -259,7 +259,8 @@ onAuthStateChangedListener((user) => {
 
 
 async function getCameraMappings(userId) {
-  const snapshot = await db.collection(`users/${userId}/cameraMapping`).get();
+  const cameraRef = collection(db, `users/${userId}/cameraMapping`);
+  const snapshot = await getDocs(cameraRef);
   const map = {};
   snapshot.forEach(doc => {
     const data = doc.data();
