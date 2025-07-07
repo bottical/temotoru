@@ -110,12 +110,7 @@ async function addBarcodeData(userId, pureBarcode, serialNumber, barcodeUser, ca
     });
 }
 
-onAuthStateChanged(auth, (user) => {
-  if (!user) {
-    alert("セッションが切れました。再ログインしてください。");
-    location.href = "/login.html"; // ログインページが異なる場合は調整
-  }
-});
+
 
 onAuthStateChangedListener((user) => {
     const path = window.location.pathname;
