@@ -264,7 +264,9 @@ async function getCameraMappings(userId) {
   const map = {};
   snapshot.forEach(doc => {
     const data = doc.data();
-    map[doc.id] = data.userDisplayName || doc.id;
+    if (data.user && data.userDisplayName) {
+      map[data.user] = data.userDisplayName;
+    }
   });
   return map;
 }
