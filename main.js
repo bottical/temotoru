@@ -14,7 +14,7 @@ setInterval(() => {
     if (input && document.activeElement !== input) {
         input.focus();
     }
-}, 500);
+}, 100);
 
 
 // public/main.js
