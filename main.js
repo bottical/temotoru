@@ -198,6 +198,7 @@ onAuthStateChangedListener((user) => {
 
           try {
             const querySnapshot = await getDocs(q);
+            const cameraMappings = await getCameraMappings(user.uid); // ← 追加
             const results = document.getElementById('searchResults');
             results.innerHTML = ''; // 既存の結果をクリア
 
@@ -223,6 +224,7 @@ onAuthStateChangedListener((user) => {
               const offsetTime = new Date(data.time.toMillis() - viewTimeOffset * 1000);
               const url = generateCameraUrl(data.cameraId, offsetTime);
               const formattedTimestamp = formatTimestamp(offsetTime);
+              const displayName = cameraMappings[data.user] || data.user; // ← 追加
               const row = tbody.insertRow();
               row.insertCell(0).textContent = data.code;
               row.insertCell(1).textContent = data.serialNumber;
