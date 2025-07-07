@@ -1,3 +1,22 @@
+// サニタイズ関数
+function sanitizeBarcode(input) {
+    return input.replace(/[\u0000-\u001F\u007F]/g, '').trim();
+}
+
+// 書式チェック関数（6〜50文字のみ）
+function isBarcodeFormatAcceptable(input) {
+    return input.length >= 6 && input.length <= 50;
+}
+
+// フォーカス監視：1秒ごとに barcodeInput をチェック
+setInterval(() => {
+    const input = document.getElementById('barcodeInput');
+    if (input && document.activeElement !== input) {
+        input.focus();
+    }
+}, 500);
+
+
 // public/main.js
 import { db, auth, signIn, signOutUser, onAuthStateChangedListener, getNextSequence, getCameraId, initializeUserData, collection, addDoc, serverTimestamp, query, where, getDocs, orderBy, limit } from "./firebase.js";
 import { showElement, hideElement, updateUIOnAuthState, formatTimestamp } from "./ui.js";
@@ -104,7 +123,14 @@ onAuthStateChangedListener((user) => {
 
                 barcodeForm.addEventListener('submit', async (e) => {
                     e.preventDefault();
-                    const barcode = document.getElementById('barcodeInput').value;
+                    const rawBarcode = document.getElementById('barcodeInput').value;
+                    document.getElementById('barcodeInput').value = '';
+                    const barcode = sanitizeBarcode(rawBarcode);
+                    if (!isBarcodeFormatAcceptable(barcode)) {
+                        console.warn("無効なバーコード:", JSON.stringify(barcode));
+                        showErrorModal("バーコードが不完全です（無視されました）");
+                        return;
+                    }
                     document.getElementById('barcodeInput').value = ''; // UI を即座にクリア
                     const userId = user.uid;
                     const barcodeUser = barcode.slice(-5);
