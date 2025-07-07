@@ -226,7 +226,7 @@ onAuthStateChangedListener((user) => {
               const row = tbody.insertRow();
               row.insertCell(0).textContent = data.code;
               row.insertCell(1).textContent = data.serialNumber;
-              row.insertCell(2).textContent = data.userDisplayName || data.user;
+              row.insertCell(2).textContent = displayName;
               row.insertCell(3).textContent = data.cameraId;
               row.insertCell(4).textContent = formattedTimestamp;
               const linkCell = row.insertCell(5);
@@ -253,3 +253,15 @@ onAuthStateChangedListener((user) => {
       }
     }
 });
+
+
+
+async function getCameraMappings(userId) {
+  const snapshot = await db.collection(`users/${userId}/cameraMapping`).get();
+  const map = {};
+  snapshot.forEach(doc => {
+    const data = doc.data();
+    map[doc.id] = data.userDisplayName || doc.id;
+  });
+  return map;
+}
