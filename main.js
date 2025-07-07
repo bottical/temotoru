@@ -145,7 +145,7 @@ onAuthStateChangedListener((user) => {
 
                   
                     document.getElementById('barcodeInput').value = ''; // UI を即座にクリア
-                    const userId = currentUser.uid;
+                    const userId = user.uid;
                     const barcodeUser = barcode.slice(-5);
                     const pureBarcode = barcode.slice(0, -5);
 
