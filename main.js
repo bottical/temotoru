@@ -1,6 +1,10 @@
 // サニタイズ関数
 function sanitizeBarcode(input) {
-    return input.replace(/[\u0000-\u001F\u007F]/g, '').trim();
+  return input
+    .replace(/[\u0000-\u001F\u007F]/g, '')         // 制御文字除去
+    .replace(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])/g, '') // 単独上位サロゲート除去
+    .replace(/(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g, '') // 単独下位サロゲート除去
+    .trim();
 }
 
 // 書式チェック関数（6〜50文字のみ）
