@@ -3,6 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <title>ログデータCSVダウンロード</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+    }
+    #downloadButton:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  </style>
 </head>
 <body>
   <h1>ログデータCSVダウンロード</h1>
@@ -10,14 +20,13 @@
   <form id="downloadForm">
     <label>開始日時：<input type="datetime-local" id="startDate" required></label><br>
     <label>終了日時：<input type="datetime-local" id="endDate" required></label><br>
-    <button type="submit">ダウンロード</button>
+    <button type="submit" id="downloadButton">ダウンロード</button>
   </form>
 
   <script type="module">
     import { db, auth, collection, query, where, getDocs } from "./firebase.js";
-    import { formatTimestamp } from "./ui.js"; // 検索画面と同じタイムスタンプ形式を使用
+    import { formatTimestamp } from "./ui.js";
 
-    // ファイル名用のJST整形バージョン（年-月-日_時分秒）
     function formatForFilename(date) {
       const yyyy = date.getFullYear();
       const mm = String(date.getMonth() + 1).padStart(2, '0');
@@ -31,20 +40,28 @@
     document.getElementById('downloadForm').addEventListener('submit', async (e) => {
       e.preventDefault();
 
+      const button = document.getElementById("downloadButton");
+      button.disabled = true;
+      const originalText = button.textContent;
+      button.textContent = "ダウンロード中...";
+
       const startInput = document.getElementById('startDate').value;
       const endInput = document.getElementById('endDate').value;
-
       const start = new Date(startInput);
       const end = new Date(endInput);
 
       if (!startInput || !endInput || start >= end) {
         alert("開始日時は終了日時より前にしてください");
+        button.disabled = false;
+        button.textContent = originalText;
         return;
       }
 
       const user = auth.currentUser;
       if (!user) {
         alert("ログインが必要です");
+        button.disabled = false;
+        button.textContent = originalText;
         return;
       }
 
@@ -62,7 +79,7 @@
         const rows = [["code", "serialNumber", "user", "cameraId", "timestamp"]];
         snapshot.forEach(doc => {
           const d = doc.data();
-          const formatted = formatTimestamp(d.time.toDate()); // JST形式で整形
+          const formatted = formatTimestamp(d.time.toDate());
           rows.push([
             d.code,
             d.serialNumber,
@@ -73,7 +90,7 @@
         });
 
         const csv = rows.map(row => row.join(",")).join("\n");
-        const bom = new Uint8Array([0xEF, 0xBB, 0xBF]); // 文字化け防止用BOM
+        const bom = new Uint8Array([0xEF, 0xBB, 0xBF]); // 文字化け防止
         const blob = new Blob([bom, csv], { type: "text/csv" });
         const url = URL.createObjectURL(blob);
 
@@ -85,6 +102,9 @@
       } catch (err) {
         console.error("CSVダウンロードエラー", err);
         alert("ダウンロードに失敗しました");
+      } finally {
+        button.disabled = false;
+        button.textContent = originalText;
       }
     });
   </script>
