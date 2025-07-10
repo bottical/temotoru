@@ -15,15 +15,29 @@
 
   <script type="module">
     import { db, auth, collection, query, where, getDocs } from "./firebase.js";
-    import { formatTimestamp } from "./ui.js"; // 検索画面と共通フォーマットを使用
+    import { formatTimestamp } from "./ui.js"; // 検索画面と同じタイムスタンプ形式を使用
+
+    // ファイル名用のJST整形バージョン（年-月-日_時分秒）
+    function formatForFilename(date) {
+      const yyyy = date.getFullYear();
+      const mm = String(date.getMonth() + 1).padStart(2, '0');
+      const dd = String(date.getDate()).padStart(2, '0');
+      const hh = String(date.getHours()).padStart(2, '0');
+      const mi = String(date.getMinutes()).padStart(2, '0');
+      const ss = String(date.getSeconds()).padStart(2, '0');
+      return `${yyyy}-${mm}-${dd}_${hh}${mi}${ss}`;
+    }
 
     document.getElementById('downloadForm').addEventListener('submit', async (e) => {
       e.preventDefault();
 
-      const start = new Date(document.getElementById('startDate').value);
-      const end = new Date(document.getElementById('endDate').value);
+      const startInput = document.getElementById('startDate').value;
+      const endInput = document.getElementById('endDate').value;
 
-      if (start >= end) {
+      const start = new Date(startInput);
+      const end = new Date(endInput);
+
+      if (!startInput || !endInput || start >= end) {
         alert("開始日時は終了日時より前にしてください");
         return;
       }
@@ -36,11 +50,7 @@
 
       const userId = user.uid;
       const barcodeDataRef = collection(db, `users/${userId}/barcodeData`);
-      const q = query(
-        barcodeDataRef,
-        where("time", ">=", start),
-        where("time", "<=", end)
-      );
+      const q = query(barcodeDataRef, where("time", ">=", start), where("time", "<=", end));
 
       try {
         const snapshot = await getDocs(q);
@@ -52,23 +62,20 @@
         const rows = [["code", "serialNumber", "user", "cameraId", "timestamp"]];
         snapshot.forEach(doc => {
           const d = doc.data();
+          const formatted = formatTimestamp(d.time.toDate()); // JST形式で整形
           rows.push([
             d.code,
             d.serialNumber,
             d.user,
             d.cameraId,
-            formatTimestamp(d.time.toDate()) // ← 検索画面と同一形式
+            formatted
           ]);
         });
 
         const csv = rows.map(row => row.join(",")).join("\n");
-        const blob = new Blob([csv], { type: "text/csv" });
+        const bom = new Uint8Array([0xEF, 0xBB, 0xBF]); // 文字化け防止用BOM
+        const blob = new Blob([bom, csv], { type: "text/csv" });
         const url = URL.createObjectURL(blob);
-
-        // ファイル名にも JST 表記を適用
-        const formatForFilename = date => formatTimestamp(date).replace(/[年月日時分秒]/g, s => {
-          return s === '年' || s === '月' || s === '日' ? '-' : s === '時' || s === '分' || s === '秒' ? '' : s;
-        }).replace(/--/g, '-').replace(/-$/, '');
 
         const a = document.createElement("a");
         a.href = url;
@@ -76,7 +83,7 @@
         a.click();
         URL.revokeObjectURL(url);
       } catch (err) {
-        console.error("データ取得エラー", err);
+        console.error("CSVダウンロードエラー", err);
         alert("ダウンロードに失敗しました");
       }
     });
