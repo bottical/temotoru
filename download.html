@@ -15,18 +15,7 @@
 
   <script type="module">
     import { db, auth, collection, query, where, getDocs } from "./firebase.js";
-
-    // JST形式に整形
-    function formatToJST(date) {
-      const jst = new Date(date.getTime() + (9 * 60 * 60 * 1000)); // UTC→JST
-      const yyyy = jst.getFullYear();
-      const mm = String(jst.getMonth() + 1).padStart(2, '0');
-      const dd = String(jst.getDate()).padStart(2, '0');
-      const hh = String(jst.getHours()).padStart(2, '0');
-      const mi = String(jst.getMinutes()).padStart(2, '0');
-      const ss = String(jst.getSeconds()).padStart(2, '0');
-      return `${yyyy}-${mm}-${dd} ${hh}:${mi}:${ss}`;
-    }
+    import { formatTimestamp } from "./ui.js"; // 検索画面と共通フォーマットを使用
 
     document.getElementById('downloadForm').addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -68,7 +57,7 @@
             d.serialNumber,
             d.user,
             d.cameraId,
-            formatToJST(d.time.toDate())
+            formatTimestamp(d.time.toDate()) // ← 検索画面と同一形式
           ]);
         });
 
@@ -76,11 +65,14 @@
         const blob = new Blob([csv], { type: "text/csv" });
         const url = URL.createObjectURL(blob);
 
-        const startLabel = formatToJST(start).replace(/[: ]/g, "_");
-        const endLabel = formatToJST(end).replace(/[: ]/g, "_");
+        // ファイル名にも JST 表記を適用
+        const formatForFilename = date => formatTimestamp(date).replace(/[年月日時分秒]/g, s => {
+          return s === '年' || s === '月' || s === '日' ? '-' : s === '時' || s === '分' || s === '秒' ? '' : s;
+        }).replace(/--/g, '-').replace(/-$/, '');
+
         const a = document.createElement("a");
         a.href = url;
-        a.download = `log_${startLabel}_to_${endLabel}.csv`;
+        a.download = `log_${formatForFilename(start)}_to_${formatForFilename(end)}.csv`;
         a.click();
         URL.revokeObjectURL(url);
       } catch (err) {
