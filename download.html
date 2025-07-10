@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>ログデータダウンロード</title>
+</head>
+<body>
+  <h1>ログデータCSVダウンロード</h1>
+
+  <form id="downloadForm">
+    <label>開始日時：<input type="datetime-local" id="startDate" required></label><br>
+    <label>終了日時：<input type="datetime-local" id="endDate" required></label><br>
+    <button type="submit">ダウンロード</button>
+  </form>
+
+  <script type="module" src="./download.js"></script>
+</body>
+</html>
