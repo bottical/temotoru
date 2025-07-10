@@ -96,22 +96,26 @@ document.addEventListener('keydown', (event) => {
 });
 
 // ショートカットによる誤動作を防止
-document.addEventListener('keydown', (event) => {
-  const blockedKeys = [
-    'Tab', 'F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9', 'F10', 'F11', 'F12',
-    'Alt', 'Escape', 'ContextMenu'
-  ];
-
-  if (
-    blockedKeys.includes(event.key) ||
-    event.ctrlKey ||
-    event.metaKey ||
-    event.altKey
-  ) {
-    event.preventDefault();
-    event.stopImmediatePropagation();
-  }
-});
+// キー制限を適用したいページのみ（例: index.html, /temotoru/）
+const path = window.location.pathname;
+if (path.endsWith('index.html') || path === '/temotoru/') {
+  document.addEventListener('keydown', (event) => {
+    const blockedKeys = [
+      'Tab', 'F1', 'F2', 'F3', 'F4', 'F5', 'F6',
+      'F7', 'F8', 'F9', 'F10', 'F11', 'F12',
+      'Alt', 'Escape', 'ContextMenu'
+    ];
+    if (
+      blockedKeys.includes(event.key) ||
+      event.ctrlKey ||
+      event.metaKey ||
+      event.altKey
+    ) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    }
+  });
+}
 
 
 
