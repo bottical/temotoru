@@ -42,6 +42,17 @@
    <button id="logoutButton" style="display:inline-block;" data-default-display="inline-block">ログアウト</button>    
 </div>
     
-    <script type="module" src="main.js"></script>
+  <!-- 動的に main.js?v=... を読み込み -->
+  <script>
+    const script = document.createElement("script");
+    script.type = "module";
+
+    // 毎回異なるキャッシュバスター（UTC時刻ベース）
+    const version = new Date().toISOString().replace(/[-:T.Z]/g, "");
+    script.src = `main.js?v=${version}`;
+
+    document.body.appendChild(script);
+  </script>
+
 </body>
 </html>
