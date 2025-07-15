@@ -49,7 +49,7 @@
 
     // 毎回異なるキャッシュバスター（UTC時刻ベース）
     const version = new Date().toISOString().replace(/[-:T.Z]/g, "");
-    script.src = `main.js?v=${version}`;
+    script.src = `/main.js?v=${version}`;
 
     document.body.appendChild(script);
   </script>
