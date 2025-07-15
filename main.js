@@ -98,9 +98,6 @@ document.addEventListener('keydown', (event) => {
 // ショートカットによる誤動作を防止
 // キー制限を適用したいページのみ（例: index.html, /temotoru/）
 const path = window.location.pathname;
-const path = window.location.pathname;
-
-// ↓ こう変更すると `/` や `/?〜` でも対応できます
 if (
   path === "/" ||
   path === "" ||
