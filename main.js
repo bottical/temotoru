@@ -149,7 +149,12 @@ onAuthStateChangedListener((user) => {
     hideErrorModal();
 
     if (user) {
-        if (path.endsWith('index.html') || path === '/temotoru/') {
+        if (
+              path.endsWith('index.html') ||
+              path === '/' ||                     // ← 追加！
+              path === '/temotoru/' ||
+              path.endsWith('/')                 // ← これもあるとより安全
+            ) {
             const barcodeForm = document.getElementById('barcodeForm');
             if (barcodeForm) {
                 showElement(barcodeForm);
