@@ -98,7 +98,11 @@ document.addEventListener('keydown', (event) => {
 // ショートカットによる誤動作を防止
 // キー制限を適用したいページのみ（例: index.html, /temotoru/）
 const path = window.location.pathname;
-if (path.endsWith('index.html') || path === '/temotoru/') {
+if (
+  path.includes('index.html') ||
+  path === '/' ||
+  path.endsWith('/')
+) {
   document.addEventListener('keydown', (event) => {
     const blockedKeys = [
       'Tab', 'F1', 'F2', 'F3', 'F4', 'F5', 'F6',
