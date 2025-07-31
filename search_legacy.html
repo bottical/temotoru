@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>旧データ検索 - テモトル</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script type="module">
+    // 必要なFirebaseモジュールを読み込み
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import {
+      getFirestore, collection, query, where, orderBy, getDocs, limit
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import {
+      getAuth, onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+    // ✅ あなたの Firebase 設定に置き換えてください
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+
+    // ログイン状態の確認
+    onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        alert("ログインしてください");
+        location.href = "/login.html";
+        return;
+      }
+
+      const form = document.getElementById('searchForm');
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const barcode = document.getElementById('barcodeInput').value.trim();
+        const userId = user.uid;
+        const resultsDiv = document.getElementById('results');
+        resultsDiv.innerHTML = "";
+
+        if (!barcode) {
+          resultsDiv.innerHTML = "<p>バーコードを入力してください。</p>";
+          return;
+        }
+
+        const ref = collection(db, `users/${userId}/barcodeData`);
+        const q = query(
+          ref,
+          where("code", ">=", barcode),
+          where("code", "<=", barcode + "\uf8ff"),
+          orderBy("code"),
+          orderBy("serialNumber", "desc"),
+          limit(20)
+        );
+
+        try {
+          const snap = await getDocs(q);
+          if (snap.empty) {
+            resultsDiv.innerHTML = "<p>結果が見つかりませんでした。</p>";
+            return;
+          }
+
+          const ul = document.createElement("ul");
+          snap.forEach(doc => {
+            const d = doc.data();
+            const li = document.createElement("li");
+            li.textContent = `[${d.serialNumber}] ${d.code} - ユーザー: ${d.user}, カメラ: ${d.cameraId}`;
+            ul.appendChild(li);
+          });
+          resultsDiv.appendChild(ul);
+        } catch (e) {
+          console.error("検索エラー:", e);
+          resultsDiv.innerHTML = `<p>検索エラー: ${e.message}</p>`;
+        }
+      });
+    });
+  </script>
+</head>
+<body>
+  <h1>旧データ検索ページ（前方一致）</h1>
+  <form id="searchForm">
+    <input type="text" id="barcodeInput" placeholder="バーコードを入力" required>
+    <button type="submit">検索</button>
+  </form>
+  <div id="results"></div>
+  <p style="color:#888;">※ このページはcodeKeywords未対応の古いデータ専用です。</p>
+</body>
+</html>
