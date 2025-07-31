@@ -126,17 +126,32 @@ if (
 
 
 // Firestore 書き込みを非同期化する関数
-async function addBarcodeData(userId, pureBarcode, serialNumber, barcodeUser, cameraId, userEmail) {
-    return addDoc(collection(db, `users/${userId}/barcodeData`), {
-        code: pureBarcode,
-        serialNumber: serialNumber,
-        time: serverTimestamp(),
-        user: barcodeUser,
-        cameraId: cameraId,
-        userEmail: userEmail,
-        userCompany: "Your Company Name"
-    });
+function generateNGrams(str) {
+  const ngrams = new Set();
+  const len = str.length;
+  for (let i = 0; i < len; i++) {
+    for (let j = i + 1; j <= len; j++) {
+      ngrams.add(str.substring(i, j));
+    }
+  }
+  return Array.from(ngrams);
 }
+
+async function addBarcodeData(userId, pureBarcode, serialNumber, barcodeUser, cameraId, userEmail) {
+  const ngrams = generateNGrams(pureBarcode); // ngram生成
+
+  return addDoc(collection(db, `users/${userId}/barcodeData`), {
+    code: pureBarcode,
+    codeKeywords: ngrams, 
+    serialNumber: serialNumber,
+    time: serverTimestamp(),
+    user: barcodeUser,
+    cameraId: cameraId,
+    userEmail: userEmail,
+    userCompany: "Your Company Name"
+  });
+}
+
 
 
 
@@ -221,10 +236,15 @@ onAuthStateChangedListener((user) => {
           const limitCount = 20; // 表示件数の制限
 
           const barcodeDataRef = collection(db, `users/${userId}/barcodeData`);
-          let q = query(barcodeDataRef);
+          let q = query(barcodeDataRef); // 初期化
 
           if (barcode) {
-            q = query(q, where("code", ">=", barcode), where("code", "<=", barcode + "\uf8ff"), orderBy("code"), orderBy("serialNumber", "desc"));
+            q = query(
+              barcodeDataRef,
+              where("codeKeywords", "array-contains", barcode), // 🔍 部分一致検索
+              orderBy("serialNumber", "desc"),
+              limit(limitCount)
+            );
           } else if (serialNumber) {
             q = query(q, where("serialNumber", "==", parseInt(serialNumber)), orderBy("serialNumber", "desc"));
           } else if (searchUser) {
@@ -232,8 +252,9 @@ onAuthStateChangedListener((user) => {
           } else if (cameraId) {
             q = query(q, where("cameraId", ">=", cameraId), where("cameraId", "<=", cameraId + "\uf8ff"), orderBy("cameraId"), orderBy("serialNumber", "desc"));
           } else {
-            q = query(q, orderBy("serialNumber", "desc")); // デフォルトでserialNumberの降順
+            q = query(q, orderBy("serialNumber", "desc"));
           }
+
 
           // クエリにリミットを適用
           q = query(q, limit(limitCount));
