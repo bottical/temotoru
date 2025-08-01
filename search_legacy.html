@@ -1,9 +1,15 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <title>旧データ検索 - テモトル</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <title>旧データ検索（Safie付き）</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 1em; }
+    th, td { border: 1px solid #ccc; padding: 6px; text-align: left; }
+    th { background-color: #f0f0f0; }
+  </style>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import {
@@ -44,7 +50,6 @@
       e.preventDefault();
       const email = document.getElementById("email").value;
       const password = document.getElementById("password").value;
-
       try {
         await signInWithEmailAndPassword(auth, email, password);
       } catch (error) {
@@ -52,12 +57,23 @@
       }
     });
 
+    function formatTimestamp(ts) {
+      const date = new Date(ts);
+      return date.toLocaleString("ja-JP");
+    }
+
+    function generateCameraUrl(cameraId, time) {
+      const baseUrl = "https://safie.link/app/streaming/";
+      const timestamp = time.getTime();
+      return `${baseUrl}${cameraId}?timestamp=${timestamp}`;
+    }
+
     function setupSearch(user) {
       const form = document.getElementById('searchForm');
       form.addEventListener('submit', async (e) => {
         e.preventDefault();
-
         const barcode = document.getElementById('barcodeInput').value.trim();
+        const offsetSec = parseInt(document.getElementById('offsetInput').value.trim(), 10) || 0;
         const userId = user.uid;
         const resultsDiv = document.getElementById('results');
         resultsDiv.innerHTML = "";
@@ -84,14 +100,40 @@
             return;
           }
 
-          const ul = document.createElement("ul");
+          const table = document.createElement("table");
+          const thead = document.createElement("thead");
+          const headRow = document.createElement("tr");
+          ["バーコード", "撮影ID", "ユーザー", "カメラID", "撮影日時", "Safie URL"].forEach(h => {
+            const th = document.createElement("th");
+            th.textContent = h;
+            headRow.appendChild(th);
+          });
+          thead.appendChild(headRow);
+          table.appendChild(thead);
+
+          const tbody = document.createElement("tbody");
+
           snap.forEach(doc => {
             const d = doc.data();
-            const li = document.createElement("li");
-            li.textContent = `[${d.serialNumber}] ${d.code} - ユーザー: ${d.user}, カメラ: ${d.cameraId}`;
-            ul.appendChild(li);
+            const row = document.createElement("tr");
+
+            const offsetTime = new Date(d.time.toMillis() - offsetSec * 1000);
+            const safieUrl = generateCameraUrl(d.cameraId, offsetTime);
+            const formattedTime = formatTimestamp(offsetTime);
+
+            row.innerHTML = `
+              <td>${d.code}</td>
+              <td>${d.serialNumber}</td>
+              <td>${d.user}</td>
+              <td>${d.cameraId}</td>
+              <td>${formattedTime}</td>
+              <td><a href="${safieUrl}" target="_blank">URL</a></td>
+            `;
+            tbody.appendChild(row);
           });
-          resultsDiv.appendChild(ul);
+
+          table.appendChild(tbody);
+          resultsDiv.appendChild(table);
         } catch (e) {
           console.error("検索エラー:", e);
           resultsDiv.innerHTML = `<p>検索エラー: ${e.message}</p>`;
@@ -101,23 +143,24 @@
   </script>
 </head>
 <body>
-  <h1>旧データ検索ページ（前方一致）</h1>
+  <h1>旧データ検索（Safieリンク付き）</h1>
 
   <!-- 🔐 ログインフォーム -->
   <form id="loginForm">
-    <input type="email" id="email" placeholder="Email" required>
-    <input type="password" id="password" placeholder="Password" required>
+    <input type="email" id="email" placeholder="Email" required />
+    <input type="password" id="password" placeholder="Password" required />
     <button type="submit">ログイン</button>
   </form>
 
   <!-- 🔎 検索UI -->
   <div id="searchSection" style="display:none;">
     <form id="searchForm">
-      <input type="text" id="barcodeInput" placeholder="バーコードを入力" required>
+      <input type="text" id="barcodeInput" placeholder="バーコード（前方一致）" required />
+      <input type="number" id="offsetInput" placeholder="秒数オフセット（例: 5）" />
       <button type="submit">検索</button>
     </form>
     <div id="results"></div>
-    <p style="color:#888;">※ このページはcodeKeywords未対応の古いデータ専用です。</p>
+    <p style="color:#888;">※ このページは codeKeywords を含まない旧データ専用です。</p>
   </div>
 </body>
 </html>
