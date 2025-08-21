@@ -242,17 +242,17 @@ onAuthStateChangedListener((user) => {
             q = query(
               barcodeDataRef,
               where("codeKeywords", "array-contains", barcode), // 🔍 部分一致検索
-              orderBy("serialNumber", "desc"),
+              orderBy("time", "desc"),
               limit(limitCount)
             );
           } else if (serialNumber) {
-            q = query(q, where("serialNumber", "==", parseInt(serialNumber)), orderBy("serialNumber", "desc"));
+            q = query(q, where("serialNumber", "==", parseInt(serialNumber)), orderBy("time", "desc"));
           } else if (searchUser) {
-            q = query(q, where("user", ">=", searchUser), where("user", "<=", searchUser + "\uf8ff"), orderBy("user"), orderBy("serialNumber", "desc"));
+            q = query(q, where("user", ">=", searchUser), where("user", "<=", searchUser + "\uf8ff"), orderBy("user"), orderBy("time", "desc"));
           } else if (cameraId) {
-            q = query(q, where("cameraId", ">=", cameraId), where("cameraId", "<=", cameraId + "\uf8ff"), orderBy("cameraId"), orderBy("serialNumber", "desc"));
+            q = query(q, where("cameraId", ">=", cameraId), where("cameraId", "<=", cameraId + "\uf8ff"), orderBy("cameraId"), orderBy("time", "desc"));
           } else {
-            q = query(q, orderBy("serialNumber", "desc"));
+            q = query(q, orderBy("time", "desc"));
           }
 
 
