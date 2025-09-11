@@ -9,7 +9,13 @@ document.getElementById('downloadForm').addEventListener('submit', async (e) => 
     alert("開始日時は終了日時より前にしてください");
     return;
   }
-
+  
+  const diffMs = end - start;
+  const diffDays = diffMs / (1000 * 60 * 60 * 24);
+  if (diffDays > 7) {
+    alert("ダウンロードできる期間は最大7日間までです");
+    return;
+  }
   const user = auth.currentUser;
   if (!user) {
     alert("ログインが必要です");
