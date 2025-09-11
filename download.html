@@ -1,112 +1,140 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-  <meta charset="UTF-8">
-  <title>ログデータCSVダウンロード</title>
-  <style>
-    body {
-      font-family: sans-serif;
-      padding: 20px;
+import { db, auth, collection, query, where, getDocs } from "./firebase.js";
+import { formatTimestamp } from "./ui.js";
+
+function formatForFilename(date) {
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const dd = String(date.getDate()).padStart(2, '0');
+  const hh = String(date.getHours()).padStart(2, '0');
+  const mi = String(date.getMinutes()).padStart(2, '0');
+  const ss = String(date.getSeconds()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}_${hh}${mi}${ss}`;
+}
+
+// ★ 追加：開始日の変更で、終了日の選択範囲(min/max)を自動制限
+const startEl = document.getElementById('startDate');
+const endEl   = document.getElementById('endDate');
+
+startEl.addEventListener('change', () => {
+  if (!startEl.value) return;
+
+  // startEl.value は "YYYY-MM-DDTHH:MM" 形式（ローカル）
+  const start = new Date(startEl.value);
+  if (isNaN(start.getTime())) return;
+
+  // 7日後の「同時刻」から 1ms 引いた時刻を max にする
+  const max = new Date(start.getTime() + 7 * 24 * 60 * 60 * 1000 - 1);
+
+  // datetime-local の value 用に "YYYY-MM-DDTHH:MM" へ丸め
+  const toLocalDatetimeValue = (d) => {
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    const hh = String(d.getHours()).padStart(2, '0');
+    const mi = String(d.getMinutes()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
+  };
+
+  endEl.min = startEl.value;
+  endEl.max = toLocalDatetimeValue(max);
+
+  // 既に選ばれている終了が範囲外なら丸める
+  if (endEl.value) {
+    const end = new Date(endEl.value);
+    if (!isNaN(end.getTime())) {
+      if (end < start) endEl.value = startEl.value;
+      if (end > max)   endEl.value = endEl.max;
     }
-    #downloadButton:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
+  }
+});
+
+document.getElementById('downloadForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  const button = document.getElementById("downloadButton");
+  button.disabled = true;
+  const originalText = button.textContent;
+  button.textContent = "ダウンロード中...";
+
+  const startInput = startEl.value;
+  const endInput   = endEl.value;
+
+  // 未入力チェック
+  if (!startInput || !endInput) {
+    alert("開始日時と終了日時を入力してください");
+    button.disabled = false; button.textContent = originalText;
+    return;
+  }
+
+  const start = new Date(startInput);
+  const end   = new Date(endInput);
+
+  // NaNチェック
+  if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+    alert("日付の形式が不正です");
+    button.disabled = false; button.textContent = originalText;
+    return;
+  }
+
+  // 開始 < 終了
+  if (start >= end) {
+    alert("開始日時は終了日時より前にしてください");
+    button.disabled = false; button.textContent = originalText;
+    return;
+  }
+
+  // ★ 厳密な 7日制限：開始から 7日後の同時刻 - 1ms を上限とする
+  const allowedEnd = new Date(start.getTime() + 7 * 24 * 60 * 60 * 1000 - 1);
+  if (end > allowedEnd) {
+    alert("ダウンロードできる期間は最大7日間までです");
+    button.disabled = false; button.textContent = originalText;
+    return;
+  }
+
+  const user = auth.currentUser;
+  if (!user) {
+    alert("ログインが必要です");
+    button.disabled = false; button.textContent = originalText;
+    return;
+  }
+
+  const userId = user.uid;
+  const barcodeDataRef = collection(db, `users/${userId}/barcodeData`);
+  const q = query(
+    barcodeDataRef,
+    where("time", ">=", start),
+    where("time", "<=", end)
+  );
+
+  try {
+    const snapshot = await getDocs(q);
+    if (snapshot.empty) {
+      alert("該当データがありません");
+      return;
     }
-  </style>
-</head>
-<body>
-  <h1>ログデータCSVダウンロード</h1>
 
-  <form id="downloadForm">
-    <label>開始日時：<input type="datetime-local" id="startDate" required></label><br>
-    <label>終了日時：<input type="datetime-local" id="endDate" required></label><br>
-    <button type="submit" id="downloadButton">ダウンロード</button>
-  </form>
-
-  <script type="module">
-    import { db, auth, collection, query, where, getDocs } from "./firebase.js";
-    import { formatTimestamp } from "./ui.js";
-
-    function formatForFilename(date) {
-      const yyyy = date.getFullYear();
-      const mm = String(date.getMonth() + 1).padStart(2, '0');
-      const dd = String(date.getDate()).padStart(2, '0');
-      const hh = String(date.getHours()).padStart(2, '0');
-      const mi = String(date.getMinutes()).padStart(2, '0');
-      const ss = String(date.getSeconds()).padStart(2, '0');
-      return `${yyyy}-${mm}-${dd}_${hh}${mi}${ss}`;
-    }
-
-    document.getElementById('downloadForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-
-      const button = document.getElementById("downloadButton");
-      button.disabled = true;
-      const originalText = button.textContent;
-      button.textContent = "ダウンロード中...";
-
-      const startInput = document.getElementById('startDate').value;
-      const endInput = document.getElementById('endDate').value;
-      const start = new Date(startInput);
-      const end = new Date(endInput);
-
-      if (!startInput || !endInput || start >= end) {
-        alert("開始日時は終了日時より前にしてください");
-        button.disabled = false;
-        button.textContent = originalText;
-        return;
-      }
-
-      const user = auth.currentUser;
-      if (!user) {
-        alert("ログインが必要です");
-        button.disabled = false;
-        button.textContent = originalText;
-        return;
-      }
-
-      const userId = user.uid;
-      const barcodeDataRef = collection(db, `users/${userId}/barcodeData`);
-      const q = query(barcodeDataRef, where("time", ">=", start), where("time", "<=", end));
-
-      try {
-        const snapshot = await getDocs(q);
-        if (snapshot.empty) {
-          alert("該当データがありません");
-          return;
-        }
-
-        const rows = [["code", "serialNumber", "user", "cameraId", "timestamp"]];
-        snapshot.forEach(doc => {
-          const d = doc.data();
-          const formatted = formatTimestamp(d.time.toDate());
-          rows.push([
-            d.code,
-            d.serialNumber,
-            d.user,
-            d.cameraId,
-            formatted
-          ]);
-        });
-
-        const csv = rows.map(row => row.join(",")).join("\n");
-        const bom = new Uint8Array([0xEF, 0xBB, 0xBF]); // 文字化け防止
-        const blob = new Blob([bom, csv], { type: "text/csv" });
-        const url = URL.createObjectURL(blob);
-
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `log_${formatForFilename(start)}_to_${formatForFilename(end)}.csv`;
-        a.click();
-        URL.revokeObjectURL(url);
-      } catch (err) {
-        console.error("CSVダウンロードエラー", err);
-        alert("ダウンロードに失敗しました");
-      } finally {
-        button.disabled = false;
-        button.textContent = originalText;
-      }
+    const rows = [["code", "serialNumber", "user", "cameraId", "timestamp"]];
+    snapshot.forEach(doc => {
+      const d = doc.data();
+      const formatted = formatTimestamp(d.time.toDate());
+      rows.push([d.code, d.serialNumber, d.user, d.cameraId, formatted]);
     });
-  </script>
-</body>
-</html>
+
+    const csv = rows.map(row => row.join(",")).join("\n");
+    const bom = new Uint8Array([0xEF, 0xBB, 0xBF]); // 文字化け防止
+    const blob = new Blob([bom, csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `log_${formatForFilename(start)}_to_${formatForFilename(end)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch (err) {
+    console.error("CSVダウンロードエラー", err);
+    alert("ダウンロードに失敗しました");
+  } finally {
+    button.disabled = false;
+    button.textContent = originalText;
+  }
+});
