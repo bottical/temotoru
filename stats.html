@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>当日作業カウンタ（ユーザー別集計）</title>
+  <style>
+    :root{
+      --bg:#0b1220; --card:#0f172a; --ink:#e5e7eb; --muted:#94a3b8; --accent:#60a5fa; --border:#1f2937;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans JP",sans-serif}
+    .wrap{max-width:960px;margin:32px auto;padding:16px}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+    h1{font-size:22px;margin:0 0 16px}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+    label{font-size:12px;color:var(--muted);display:block;margin-bottom:6px}
+    input,select{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:#0b1325;color:var(--ink)}
+    button{padding:10px 14px;border:1px solid var(--border);border-radius:10px;background:#111b35;color:var(--ink);cursor:pointer}
+    button:hover{background:#162246}
+    .grid{margin-top:16px;border-collapse:collapse;width:100%}
+    .grid th,.grid td{border-bottom:1px dashed var(--border);padding:10px 8px;text-align:left}
+    .grid th{color:var(--muted);font-weight:600;font-size:12px}
+    .stat{display:flex;gap:16px;flex-wrap:wrap;margin:12px 0}
+    .pill{background:#0b1325;border:1px solid var(--border);border-radius:999px;padding:8px 12px;font-size:12px;color:var(--muted)}
+    .big{font-size:28px;font-weight:700}
+    .ok{color:#78e08f} .warn{color:#f8c291}
+    .footer{margin-top:8px;font-size:12px;color:var(--muted)}
+    .right{display:flex;gap:8px;align-items:end;justify-content:flex-end}
+    .empty{color:var(--muted);padding:16px 0}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>当日作業カウンタ（ユーザー別集計）</h1>
+
+      <div class="row">
+        <div>
+          <label for="theDate">対象日</label>
+          <input id="theDate" type="date" />
+        </div>
+        <div>
+          <label for="expected">当日の予定件数（手入力）</label>
+          <input id="expected" type="number" min="0" step="1" placeholder="例）1200" />
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label for="intervalSec">更新間隔（秒）</label>
+          <select id="intervalSec">
+            <option value="0">手動のみ</option>
+            <option value="5">5秒</option>
+            <option value="10" selected>10秒</option>
+            <option value="30">30秒</option>
+            <option value="60">60秒</option>
+          </select>
+        </div>
+        <div class="right">
+          <button id="refreshBtn" title="今すぐ再集計">⟳ 再集計</button>
+        </div>
+      </div>
+
+      <div class="stat">
+        <span class="pill">最終更新: <span id="lastUpdated">—</span></span>
+        <span class="pill">合計作業件数: <span id="total" class="big">0</span></span>
+        <span class="pill">進捗率: <span id="progress" class="big">0%</span></span>
+      </div>
+
+      <table class="grid" id="table">
+        <thead>
+          <tr><th style="width:40%">ユーザーID</th><th style="width:20%">件数</th><th>比率</th></tr>
+        </thead>
+        <tbody id="tbody">
+          <tr><td colspan="3" class="empty">データを読み込み中…</td></tr>
+        </tbody>
+      </table>
+
+      <div class="footer" id="footnote">
+        ログインユーザー配下の <code>users/{uid}/barcodeData</code> を対象に
+        <code>time</code>（当日0:00〜23:59:59）と一致した書類を集計します。
+      </div>
+    </div>
+  </div>
+
+  <!-- 既存のモジュールを利用 -->
+  <script type="module">
+    import { db, auth, onAuthStateChangedListener, collection, query, where, getDocs } from "./firebase.js";
+
+    const $ = (id)=>document.getElementById(id);
+    const tbody = $("tbody");
+    const totalEl = $("total");
+    const progressEl = $("progress");
+    const lastUpdatedEl = $("lastUpdated");
+    const theDateEl = $("theDate");
+    const expectedEl = $("expected");
+    const intervalEl = $("intervalSec");
+    const refreshBtn = $("refreshBtn");
+
+    // 既定値: 今日
+    const jstTodayISO = (() => {
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = String(now.getMonth()+1).padStart(2,'0');
+      const d = String(now.getDate()).padStart(2,'0');
+      return `${y}-${m}-${d}`;
+    })();
+    theDateEl.value = jstTodayISO;
+
+    let timer = null;
+    let currentUid = null;
+
+    onAuthStateChangedListener(async (user) => {
+      if (!user) {
+        tbody.innerHTML = `<tr><td colspan="3" class="empty">ログインが必要です。</td></tr>`;
+        stopTimer();
+        return;
+      }
+      currentUid = user.uid;
+      await refresh();
+      applyTimer();
+    });
+
+    function stopTimer(){
+      if (timer){ clearInterval(timer); timer = null; }
+    }
+    function applyTimer(){
+      stopTimer();
+      const sec = parseInt(intervalEl.value,10);
+      if (sec > 0){
+        timer = setInterval(refresh, sec*1000);
+      }
+    }
+
+    intervalEl.addEventListener("change", applyTimer);
+    theDateEl.addEventListener("change", refresh);
+    expectedEl.addEventListener("input", updateProgressOnly);
+    refreshBtn.addEventListener("click", refresh);
+
+    function startOfDayJST(dateStr){
+      // dateStr: "YYYY-MM-DD" を JST 0:00 に
+      const [y,m,d] = dateStr.split("-").map(Number);
+      // ローカルタイムをJSTとして扱う（クライアントはJST運用想定）
+      return new Date(y, m-1, d, 0, 0, 0, 0);
+    }
+    function endOfDayJST(dateStr){
+      const [y,m,d] = dateStr.split("-").map(Number);
+      return new Date(y, m-1, d, 23, 59, 59, 999);
+    }
+    function fmtTime(dt){
+      const y=dt.getFullYear(), mo=String(dt.getMonth()+1).padStart(2,"0"), da=String(dt.getDate()).padStart(2,"0");
+      const hh=String(dt.getHours()).padStart(2,"0"), mi=String(dt.getMinutes()).padStart(2,"0"), ss=String(dt.getSeconds()).padStart(2,"0");
+      return `${y}-${mo}-${da} ${hh}:${mi}:${ss}`;
+    }
+
+    async function refresh(){
+      if (!currentUid) return;
+      const day = theDateEl.value;
+      const start = startOfDayJST(day);
+      const end = endOfDayJST(day);
+
+      // Firestore: users/{uid}/barcodeData から time 範囲で取得
+      const ref = collection(db, `users/${currentUid}/barcodeData`);
+      const q = query(ref, where("time", ">=", start), where("time", "<=", end));
+      let snap;
+      try{
+        snap = await getDocs(q);
+      }catch(e){
+        console.error(e);
+        tbody.innerHTML = `<tr><td colspan="3" class="empty">読み込みに失敗しました：${e.message ?? e}</td></tr>`;
+        return;
+      }
+
+      // ユーザーIDごとに集計（data.user）
+      const counter = new Map();
+      snap.forEach(doc=>{
+        const data = doc.data();
+        const key = data.user ?? "(不明)";
+        counter.set(key, (counter.get(key)||0)+1);
+      });
+
+      // 総計
+      const total = Array.from(counter.values()).reduce((a,b)=>a+b,0);
+      renderTable(counter, total);
+
+      // 進捗率更新
+      updateProgress(total);
+
+      lastUpdatedEl.textContent = fmtTime(new Date());
+    }
+
+    function renderTable(counterMap, total){
+      if (counterMap.size === 0){
+        tbody.innerHTML = `<tr><td colspan="3" class="empty">該当データがありません。</td></tr>`;
+        totalEl.textContent = "0";
+        return;
+      }
+      const rows = [];
+      // ソート：件数降順 → ユーザーID
+      const sorted = Array.from(counterMap.entries()).sort((a,b)=>{
+        if (b[1] !== a[1]) return b[1]-a[1];
+        return a[0].localeCompare(b[0]);
+      });
+
+      for (const [userId, count] of sorted){
+        const ratio = total>0 ? Math.round((count/total)*100) : 0;
+        rows.push(`<tr><td>${escapeHTML(userId)}</td><td>${count}</td><td>${ratio}%</td></tr>`);
+      }
+      tbody.innerHTML = rows.join("");
+      totalEl.textContent = String(total);
+    }
+
+    function updateProgressOnly(){
+      const total = parseInt(totalEl.textContent || "0", 10) || 0;
+      updateProgress(total);
+    }
+
+    function updateProgress(total){
+      const expected = parseInt(expectedEl.value,10);
+      let pct = 0;
+      if (!isNaN(expected) && expected > 0){
+        pct = Math.min(999, Math.round((total/expected)*100));
+      }
+      progressEl.textContent = pct + "%";
+      progressEl.className = "big " + (pct>=100 ? "ok" : "warn");
+    }
+
+    function escapeHTML(str){
+      return String(str).replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[s]));
+    }
+  </script>
+</body>
+</html>
