@@ -28,17 +28,20 @@
     .footer{margin-top:8px;font-size:12px;color:var(--muted)}
     .right{display:flex;gap:8px;align-items:end;justify-content:flex-end}
     .empty{color:var(--muted);padding:16px 0}
+    .hint{font-size:12px;color:var(--muted);margin-top:4px}
+    .badge{font-size:11px;padding:4px 8px;border:1px solid var(--border);border-radius:999px;background:#0b1325;color:#cbd5e1}
   </style>
 </head>
 <body>
   <div class="wrap">
     <div class="card">
-      <h1>当日作業カウンタ（ユーザー別集計）</h1>
+      <h1>当日作業カウンタ（ユーザー別集計） <span id="modeBadge" class="badge">—</span></h1>
 
       <div class="row">
         <div>
           <label for="theDate">対象日</label>
           <input id="theDate" type="date" />
+          <div class="hint">※ 今日を選ぶとリアルタイム差分購読、過去日なら1回だけ取得します</div>
         </div>
         <div>
           <label for="expected">当日の予定件数（手入力）</label>
@@ -49,13 +52,10 @@
       <div class="row">
         <div>
           <label for="intervalSec">更新間隔（秒）</label>
-          <select id="intervalSec">
-            <option value="0">手動のみ</option>
-            <option value="5">5秒</option>
-            <option value="10" selected>10秒</option>
-            <option value="30">30秒</option>
-            <option value="60">60秒</option>
+          <select id="intervalSec" disabled>
+            <option value="0" selected>リアルタイム購読／手動</option>
           </select>
+          <div class="hint">※ この改修ではポーリングを使いません（通信量を抑制）</div>
         </div>
         <div class="right">
           <button id="refreshBtn" title="今すぐ再集計">⟳ 再集計</button>
@@ -79,14 +79,18 @@
 
       <div class="footer" id="footnote">
         ログインユーザー配下の <code>users/{uid}/barcodeData</code> を対象に
-        <code>time</code>（当日0:00〜23:59:59）と一致した書類を集計します。
+        <code>time</code>（選択日の 00:00〜23:59:59）で絞り込んで集計します。<br/>
+        今日を選択時は <code>onSnapshot</code> により差分のみ取り込み、過去日は <code>getDocs</code> を1回だけ実行します。
       </div>
     </div>
   </div>
 
   <!-- 既存のモジュールを利用 -->
   <script type="module">
-    import { db, auth, onAuthStateChangedListener, collection, query, where, getDocs } from "./firebase.js";
+    import {
+      db, auth, onAuthStateChangedListener,
+      collection, query, where, getDocs, orderBy, onSnapshot
+    } from "./firebase.js";
 
     const $ = (id)=>document.getElementById(id);
     const tbody = $("tbody");
@@ -95,8 +99,8 @@
     const lastUpdatedEl = $("lastUpdated");
     const theDateEl = $("theDate");
     const expectedEl = $("expected");
-    const intervalEl = $("intervalSec");
     const refreshBtn = $("refreshBtn");
+    const modeBadge = $("modeBadge");
 
     // 既定値: 今日
     const jstTodayISO = (() => {
@@ -108,40 +112,34 @@
     })();
     theDateEl.value = jstTodayISO;
 
-    let timer = null;
     let currentUid = null;
+    let unsubscribe = null;   // onSnapshot解除用
+    let counter = new Map();  // ユーザー別件数
+    let total = 0;            // 合計件数
 
     onAuthStateChangedListener(async (user) => {
       if (!user) {
         tbody.innerHTML = `<tr><td colspan="3" class="empty">ログインが必要です。</td></tr>`;
-        stopTimer();
+        setModeBadge("—");
+        cleanupSubscription();
         return;
       }
       currentUid = user.uid;
-      await refresh();
-      applyTimer();
+      await startAggregation(); // 初回スタート
     });
 
-    function stopTimer(){
-      if (timer){ clearInterval(timer); timer = null; }
-    }
-    function applyTimer(){
-      stopTimer();
-      const sec = parseInt(intervalEl.value,10);
-      if (sec > 0){
-        timer = setInterval(refresh, sec*1000);
-      }
+    window.addEventListener("beforeunload", cleanupSubscription);
+
+    function cleanupSubscription(){
+      if (unsubscribe){ unsubscribe(); unsubscribe = null; }
     }
 
-    intervalEl.addEventListener("change", applyTimer);
-    theDateEl.addEventListener("change", refresh);
-    expectedEl.addEventListener("input", updateProgressOnly);
-    refreshBtn.addEventListener("click", refresh);
+    function setModeBadge(text){
+      modeBadge.textContent = text;
+    }
 
     function startOfDayJST(dateStr){
-      // dateStr: "YYYY-MM-DD" を JST 0:00 に
       const [y,m,d] = dateStr.split("-").map(Number);
-      // ローカルタイムをJSTとして扱う（クライアントはJST運用想定）
       return new Date(y, m-1, d, 0, 0, 0, 0);
     }
     function endOfDayJST(dateStr){
@@ -153,41 +151,88 @@
       const hh=String(dt.getHours()).padStart(2,"0"), mi=String(dt.getMinutes()).padStart(2,"0"), ss=String(dt.getSeconds()).padStart(2,"0");
       return `${y}-${mo}-${da} ${hh}:${mi}:${ss}`;
     }
+    function escapeHTML(str){
+      return String(str).replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[s]));
+    }
 
-    async function refresh(){
+    // ====== 集計エンジン ======
+    async function startAggregation(){
       if (!currentUid) return;
+
+      // 既存購読を外し、状態を初期化
+      cleanupSubscription();
+      counter = new Map();
+      total = 0;
+      renderTable(counter, total);
+      updateProgress(total);
+      lastUpdatedEl.textContent = "—";
+
       const day = theDateEl.value;
       const start = startOfDayJST(day);
       const end = endOfDayJST(day);
 
-      // Firestore: users/{uid}/barcodeData から time 範囲で取得
       const ref = collection(db, `users/${currentUid}/barcodeData`);
-      const q = query(ref, where("time", ">=", start), where("time", "<=", end));
-      let snap;
-      try{
-        snap = await getDocs(q);
-      }catch(e){
-        console.error(e);
-        tbody.innerHTML = `<tr><td colspan="3" class="empty">読み込みに失敗しました：${e.message ?? e}</td></tr>`;
-        return;
+      const isToday = (theDateEl.value === jstTodayISO);
+
+      if (isToday) {
+        // 今日：リアルタイム差分購読（初回に当日全件→以後は差分のみ）
+        setModeBadge("リアルタイム（差分購読）");
+        const q = query(
+          ref,
+          where("time", ">=", start),
+          where("time", "<=", end),
+          orderBy("time", "asc")
+        );
+        unsubscribe = onSnapshot(q, (snap) => {
+          if (snap.metadata.fromCache && !snap.metadata.hasPendingWrites) {
+            // キャッシュからの初期読み込みであればスキップしてもOK（任意）
+          }
+          let changed = false;
+          snap.docChanges().forEach(change => {
+            const data = change.doc.data();
+            const key = data.user ?? "(不明)";
+            if (change.type === "added") {
+              counter.set(key, (counter.get(key)||0) + 1);
+              total += 1;
+              changed = true;
+            } else if (change.type === "modified") {
+              // 追加オンリー想定なら不要。もし「user」変更があり得る運用なら再集計が必要。
+            } else if (change.type === "removed") {
+              // 削除運用があり得るなら再計算が必要（ここでは省略）
+            }
+          });
+          if (changed){
+            renderTable(counter, total);
+            updateProgress(total);
+          }
+          lastUpdatedEl.textContent = fmtTime(new Date());
+        }, (err) => {
+          console.error(err);
+          tbody.innerHTML = `<tr><td colspan="3" class="empty">購読に失敗しました：${err.message ?? err}</td></tr>`;
+          setModeBadge("エラー");
+        });
+
+      } else {
+        // 過去日：1回だけ取得
+        setModeBadge("単回取得（過去日）");
+        const q = query(ref, where("time", ">=", start), where("time", "<=", end));
+        try{
+          const snap = await getDocs(q);
+          snap.forEach(doc=>{
+            const data = doc.data();
+            const key = data.user ?? "(不明)";
+            counter.set(key, (counter.get(key)||0) + 1);
+            total += 1;
+          });
+          renderTable(counter, total);
+          updateProgress(total);
+          lastUpdatedEl.textContent = fmtTime(new Date());
+        }catch(e){
+          console.error(e);
+          tbody.innerHTML = `<tr><td colspan="3" class="empty">読み込みに失敗しました：${e.message ?? e}</td></tr>`;
+          setModeBadge("エラー");
+        }
       }
-
-      // ユーザーIDごとに集計（data.user）
-      const counter = new Map();
-      snap.forEach(doc=>{
-        const data = doc.data();
-        const key = data.user ?? "(不明)";
-        counter.set(key, (counter.get(key)||0)+1);
-      });
-
-      // 総計
-      const total = Array.from(counter.values()).reduce((a,b)=>a+b,0);
-      renderTable(counter, total);
-
-      // 進捗率更新
-      updateProgress(total);
-
-      lastUpdatedEl.textContent = fmtTime(new Date());
     }
 
     function renderTable(counterMap, total){
@@ -197,7 +242,6 @@
         return;
       }
       const rows = [];
-      // ソート：件数降順 → ユーザーID
       const sorted = Array.from(counterMap.entries()).sort((a,b)=>{
         if (b[1] !== a[1]) return b[1]-a[1];
         return a[0].localeCompare(b[0]);
@@ -211,11 +255,6 @@
       totalEl.textContent = String(total);
     }
 
-    function updateProgressOnly(){
-      const total = parseInt(totalEl.textContent || "0", 10) || 0;
-      updateProgress(total);
-    }
-
     function updateProgress(total){
       const expected = parseInt(expectedEl.value,10);
       let pct = 0;
@@ -226,9 +265,10 @@
       progressEl.className = "big " + (pct>=100 ? "ok" : "warn");
     }
 
-    function escapeHTML(str){
-      return String(str).replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[s]));
-    }
+    // ====== UIイベント ======
+    theDateEl.addEventListener("change", startAggregation);
+    expectedEl.addEventListener("input", () => updateProgress(total));
+    refreshBtn.addEventListener("click", startAggregation);
   </script>
 </body>
 </html>
