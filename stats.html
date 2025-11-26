@@ -1,41 +1,297 @@
 <!doctype html>
-<html lang="ja">
+<html lang="ja" data-theme="dark">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>当日作業カウンタ（ユーザー別集計）</title>
   <style>
     :root{
-      --bg:#0b1220; --card:#0f172a; --ink:#e5e7eb; --muted:#94a3b8; --accent:#60a5fa; --border:#1f2937;
+      /* Light theme (default) */
+      --bg:#f3f4f6;
+      --card:#ffffff;
+      --ink:#111827;
+      --muted:#6b7280;
+      --accent:#3b82f6;
+      --accent-soft:rgba(59,130,246,0.08);
+      --border:#e5e7eb;
+      --pill-bg:#f9fafb;
+      --input-bg:#f9fafb;
+      --badge-bg:#e5e7eb;
+      --badge-ink:#374151;
+      --bar-bg:#e5e7eb;
+      --bar-label:#111827;
+      --table-strip:#f9fafb;
     }
+    :root[data-theme="dark"]{
+      /* Dark theme */
+      --bg:#020617;
+      --card:#020617;
+      --ink:#e5e7eb;
+      --muted:#94a3b8;
+      --accent:#60a5fa;
+      --accent-soft:rgba(56,189,248,0.16);
+      --border:#1f2937;
+      --pill-bg:#020617;
+      --input-bg:#020617;
+      --badge-bg:#0b1325;
+      --badge-ink:#e5e7eb;
+      --bar-bg:#020617;
+      --bar-label:#e5e7eb;
+      --table-strip:#020617;
+    }
+
     *{box-sizing:border-box}
-    body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans JP",sans-serif}
-    .wrap{max-width:960px;margin:32px auto;padding:16px}
-    .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
-    h1{font-size:22px;margin:0 0 16px}
-    .row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
-    label{font-size:12px;color:var(--muted);display:block;margin-bottom:6px}
-    input,select{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:#0b1325;color:var(--ink)}
-    button{padding:10px 14px;border:1px solid var(--border);border-radius:10px;background:#111b35;color:var(--ink);cursor:pointer}
-    button:hover{background:#162246}
-    .grid{margin-top:16px;border-collapse:collapse;width:100%}
-    .grid th,.grid td{border-bottom:1px dashed var(--border);padding:10px 8px;text-align:left}
-    .grid th{color:var(--muted);font-weight:600;font-size:12px}
-    .stat{display:flex;gap:16px;flex-wrap:wrap;margin:12px 0}
-    .pill{background:#0b1325;border:1px solid var(--border);border-radius:999px;padding:8px 12px;font-size:12px;color:var(--muted)}
-    .big{font-size:28px;font-weight:700}
-    .ok{color:#78e08f} .warn{color:#f8c291}
-    .footer{margin-top:8px;font-size:12px;color:var(--muted)}
-    .right{display:flex;gap:8px;align-items:end;justify-content:flex-end}
-    .empty{color:var(--muted);padding:16px 0}
-    .hint{font-size:12px;color:var(--muted);margin-top:4px}
-    .badge{font-size:11px;padding:4px 8px;border:1px solid var(--border);border-radius:999px;background:#0b1325;color:#cbd5e1}
+    body{
+      margin:0;
+      background:var(--bg);
+      color:var(--ink);
+      font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans JP",sans-serif;
+    }
+    .wrap{
+      max-width:960px;
+      margin:32px auto;
+      padding:16px;
+    }
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:16px;
+      padding:20px;
+      box-shadow:0 10px 30px rgba(0,0,0,.25);
+    }
+
+    .topbar{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      margin-bottom:16px;
+    }
+    h1{
+      font-size:22px;
+      margin:0;
+      display:flex;
+      align-items:center;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+    .badge{
+      font-size:11px;
+      padding:4px 8px;
+      border:1px solid var(--border);
+      border-radius:999px;
+      background:var(--badge-bg);
+      color:var(--badge-ink);
+    }
+    .icon-btn{
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background:var(--pill-bg);
+      color:var(--muted);
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      cursor:pointer;
+      font-size:12px;
+      white-space:nowrap;
+    }
+    .icon-btn:hover{opacity:.9}
+
+    .row{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:12px;
+      margin-bottom:12px;
+    }
+    @media (max-width:640px){
+      .row{grid-template-columns:1fr}
+      .topbar{flex-direction:column;align-items:flex-start}
+    }
+
+    label{
+      font-size:12px;
+      color:var(--muted);
+      display:block;
+      margin-bottom:6px;
+    }
+    input,select{
+      width:100%;
+      padding:10px 12px;
+      border:1px solid var(--border);
+      border-radius:10px;
+      background:var(--input-bg);
+      color:var(--ink);
+      font-size:14px;
+    }
+    button{
+      padding:10px 14px;
+      border:1px solid var(--border);
+      border-radius:10px;
+      background:var(--pill-bg);
+      color:var(--ink);
+      cursor:pointer;
+      font-size:14px;
+    }
+    button:hover{background:rgba(148,163,184,0.12)}
+
+    .hint{
+      font-size:12px;
+      color:var(--muted);
+      margin-top:4px;
+    }
+
+    /* ===== 当日進捗エリア ===== */
+    .stat{
+      display:grid;
+      grid-template-columns:minmax(0,2fr) minmax(0,3fr);
+      gap:16px;
+      align-items:stretch;
+      margin:16px 0 8px;
+    }
+    @media (max-width:640px){
+      .stat{
+        grid-template-columns:1fr;
+      }
+    }
+    .stat-main{
+      background:var(--accent-soft);
+      border-radius:16px;
+      padding:14px 16px 12px;
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+      min-height:120px;
+    }
+    .stat-main-label{
+      font-size:12px;
+      font-weight:600;
+      color:var(--muted);
+      text-transform:uppercase;
+      letter-spacing:.08em;
+    }
+    .stat-progress-ring{
+      margin:4px 0 6px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    .progress-value{
+      font-size:44px;
+      font-weight:800;
+      letter-spacing:.06em;
+    }
+    .ok{color:#22c55e}
+    .warn{color:#f97316}
+    .stat-main-meta{
+      display:flex;
+      justify-content:space-between;
+      font-size:12px;
+      color:var(--muted);
+      gap:8px;
+      flex-wrap:wrap;
+    }
+
+    .stat-side{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      align-items:flex-start;
+      justify-content:center;
+    }
+    .pill{
+      background:var(--pill-bg);
+      border:1px solid var(--border);
+      border-radius:999px;
+      padding:8px 12px;
+      font-size:12px;
+      color:var(--muted);
+    }
+
+    /* ===== テーブル ===== */
+    .grid{
+      margin-top:16px;
+      border-collapse:collapse;
+      width:100%;
+      border-radius:12px;
+      overflow:hidden;
+      font-size:13px;
+    }
+    .grid th,
+    .grid td{
+      border-bottom:1px dashed var(--border);
+      padding:8px 8px;
+      text-align:left;
+    }
+    .grid th{
+      color:var(--muted);
+      font-weight:600;
+      font-size:12px;
+      background:rgba(148,163,184,0.04);
+    }
+    .grid tbody tr:nth-child(even){
+      background:var(--table-strip);
+    }
+    .grid td.num{
+      text-align:right;
+      font-variant-numeric:tabular-nums;
+    }
+
+    .empty{
+      color:var(--muted);
+      padding:16px 0;
+      text-align:center;
+    }
+
+    /* ユーザー別％バー */
+    .bar-wrap{
+      position:relative;
+      height:18px;
+      border-radius:999px;
+      background:var(--bar-bg);
+      overflow:hidden;
+    }
+    .bar-fill{
+      position:absolute;
+      inset:0;
+      width:0;
+      background:linear-gradient(90deg,var(--accent),#22c55e);
+      transition:width .35s ease;
+    }
+    .bar-label{
+      position:relative;
+      font-size:11px;
+      text-align:center;
+      line-height:18px;
+      color:var(--bar-label);
+      font-variant-numeric:tabular-nums;
+    }
+
+    .footer{
+      margin-top:8px;
+      font-size:12px;
+      color:var(--muted);
+    }
+    .right{
+      display:flex;
+      gap:8px;
+      align-items:end;
+      justify-content:flex-end;
+    }
   </style>
 </head>
 <body>
   <div class="wrap">
     <div class="card">
-      <h1>当日作業カウンタ（ユーザー別集計） <span id="modeBadge" class="badge">—</span></h1>
+      <div class="topbar">
+        <h1>
+          当日作業カウンタ（ユーザー別集計）
+          <span id="modeBadge" class="badge">—</span>
+        </h1>
+        <button id="themeToggle" class="icon-btn" type="button">
+          <span id="themeIcon">🌙</span><span>テーマ切替</span>
+        </button>
+      </div>
 
       <div class="row">
         <div>
@@ -62,15 +318,31 @@
         </div>
       </div>
 
+      <!-- 進捗ハイライト -->
       <div class="stat">
-        <span class="pill">最終更新: <span id="lastUpdated">—</span></span>
-        <span class="pill">合計作業件数: <span id="total" class="big">0</span></span>
-        <span class="pill">進捗率: <span id="progress" class="big">0%</span></span>
+        <div class="stat-main">
+          <div class="stat-main-label">当日の進捗率</div>
+          <div class="stat-progress-ring">
+            <span id="progress" class="progress-value warn">0%</span>
+          </div>
+          <div class="stat-main-meta">
+            <span>予定：<span id="expectedLabel">—</span> 件</span>
+            <span>実績：<span id="totalInline">0</span> 件</span>
+          </div>
+        </div>
+        <div class="stat-side">
+          <span class="pill">最終更新: <span id="lastUpdated">—</span></span>
+          <span class="pill">合計作業件数: <span id="total">0</span></span>
+        </div>
       </div>
 
       <table class="grid" id="table">
         <thead>
-          <tr><th style="width:40%">ユーザーID</th><th style="width:20%">件数</th><th>比率</th></tr>
+          <tr>
+            <th style="width:40%">ユーザーID</th>
+            <th style="width:20%;text-align:right">件数</th>
+            <th>比率</th>
+          </tr>
         </thead>
         <tbody id="tbody">
           <tr><td colspan="3" class="empty">データを読み込み中…</td></tr>
@@ -95,12 +367,44 @@
     const $ = (id)=>document.getElementById(id);
     const tbody = $("tbody");
     const totalEl = $("total");
+    const totalInlineEl = $("totalInline");
+    const expectedLabelEl = $("expectedLabel");
     const progressEl = $("progress");
     const lastUpdatedEl = $("lastUpdated");
     const theDateEl = $("theDate");
     const expectedEl = $("expected");
     const refreshBtn = $("refreshBtn");
     const modeBadge = $("modeBadge");
+
+    const themeToggle = $("themeToggle");
+    const themeIcon   = $("themeIcon");
+    const THEME_KEY   = "statsTheme";
+
+    // ===== テーマ切り替え =====
+    function applyTheme(theme){
+      document.documentElement.setAttribute("data-theme", theme);
+      if (themeIcon){
+        themeIcon.textContent = theme === "dark" ? "ダーク" : "通常";
+      }
+    }
+    (function initTheme(){
+      const saved = localStorage.getItem(THEME_KEY);
+      if (saved === "light" || saved === "dark"){
+        applyTheme(saved);
+      }else{
+        const prefersDark = window.matchMedia &&
+          window.matchMedia("(prefers-color-scheme: dark)").matches;
+        applyTheme(prefersDark ? "dark" : "light");
+      }
+    })();
+    if (themeToggle){
+      themeToggle.addEventListener("click", () => {
+        const current = document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light";
+        const next = current === "dark" ? "light" : "dark";
+        applyTheme(next);
+        localStorage.setItem(THEME_KEY, next);
+      });
+    }
 
     // 既定値: 今日
     const jstTodayISO = (() => {
@@ -239,6 +543,7 @@
       if (counterMap.size === 0){
         tbody.innerHTML = `<tr><td colspan="3" class="empty">該当データがありません。</td></tr>`;
         totalEl.textContent = "0";
+        if (totalInlineEl) totalInlineEl.textContent = "0";
         return;
       }
       const rows = [];
@@ -249,20 +554,40 @@
 
       for (const [userId, count] of sorted){
         const ratio = total>0 ? Math.round((count/total)*100) : 0;
-        rows.push(`<tr><td>${escapeHTML(userId)}</td><td>${count}</td><td>${ratio}%</td></tr>`);
+        rows.push(`
+          <tr>
+            <td>${escapeHTML(userId)}</td>
+            <td class="num">${count}</td>
+            <td>
+              <div class="bar-wrap">
+                <div class="bar-fill" style="width:${ratio}%;"></div>
+                <div class="bar-label">${ratio}%</div>
+              </div>
+            </td>
+          </tr>
+        `);
       }
       tbody.innerHTML = rows.join("");
       totalEl.textContent = String(total);
+      if (totalInlineEl) totalInlineEl.textContent = String(total);
     }
 
-    function updateProgress(total){
+    function updateProgress(currentTotal){
       const expected = parseInt(expectedEl.value,10);
       let pct = 0;
       if (!isNaN(expected) && expected > 0){
-        pct = Math.min(999, Math.round((total/expected)*100));
+        pct = Math.min(999, Math.round((currentTotal/expected)*100));
       }
       progressEl.textContent = pct + "%";
-      progressEl.className = "big " + (pct>=100 ? "ok" : "warn");
+      progressEl.classList.remove("ok","warn");
+      progressEl.classList.add(pct>=100 ? "ok" : "warn");
+
+      if (expectedLabelEl){
+        expectedLabelEl.textContent = (!isNaN(expected) && expected>0) ? expected : "—";
+      }
+      if (totalInlineEl){
+        totalInlineEl.textContent = String(currentTotal);
+      }
     }
 
     // ====== UIイベント ======
