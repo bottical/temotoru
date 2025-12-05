@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="utf-8" />
-  <title>テモトル 月間利用件数</title>
+  <title>テモトル バーコードデータ 月間件数</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     * { box-sizing: border-box; }
@@ -100,11 +100,11 @@
 </head>
 <body>
   <div class="page">
-    <h1>テモトル 月間利用件数</h1>
+    <h1>テモトル バーコードデータ 月間件数</h1>
 
-    <!-- 最新月の利用件数 -->
+    <!-- 最新月のバーコードデータ件数 -->
     <div class="card">
-      <div class="label">最新月の利用件数</div>
+      <div class="label">最新月のバーコード読み取り件数</div>
       <div class="current-month">
         <div class="current-month-name" id="current-month-name">-</div>
         <div>
@@ -117,12 +117,12 @@
 
     <!-- 月別一覧 -->
     <div class="card">
-      <div class="label">月別利用件数一覧</div>
+      <div class="label">月別バーコードデータ件数一覧</div>
       <table>
         <thead>
           <tr>
             <th>年月</th>
-            <th>件数</th>
+            <th>件数（バーコードデータ）</th>
           </tr>
         </thead>
         <tbody id="list-body"></tbody>
@@ -134,21 +134,21 @@
         </tfoot>
       </table>
       <p class="footer-note">
-        ※ データはローカルで手動更新（HTML 内の data 配列を書き換え）しています。
+        ※ データはローカルで手動更新（HTML 内の data 配列に、月別のバーコードデータ件数を入力）しています。
       </p>
     </div>
   </div>
 
   <script>
-    // ===== ここだけ編集すればOK：月次データ =====
-    // month: "YYYY-MM", count: 利用件数
+    // ===== ここだけ編集すればOK：月次バーコードデータ件数 =====
+    // month: "YYYY-MM", count: その月のバーコードデータ件数（例：Firestoreの document 数）
     const data = [
-      { month: "2025-01", count: 120 },
-      { month: "2025-02", count: 145 },
-      { month: "2025-03", count: 160 },
-      { month: "2025-04", count: 180 },
-      { month: "2025-05", count: 210 },
-      { month: "2025-06", count: 195 }
+      { month: "2025-01", count: 3200 },
+      { month: "2025-02", count: 4100 },
+      { month: "2025-03", count: 3980 },
+      { month: "2025-04", count: 4520 },
+      { month: "2025-05", count: 5010 },
+      { month: "2025-06", count: 4880 }
       // ↑ 新しい月が出たら末尾に追加してください
     ];
     // =========================================
