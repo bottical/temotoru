@@ -2,8 +2,14 @@
 <html lang="ja">
 <head>
   <meta charset="utf-8" />
-  <title>テモトル バーコードデータ 月間件数</title>
+  <title>テモトル バーコードデータ 月間件数（Firestore集計）</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Firebase SDK（compat版） -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
   <style>
     * { box-sizing: border-box; }
     body {
@@ -96,11 +102,22 @@
       font-size: 0.75rem;
       color: #9ca3af;
     }
+
+    .status {
+      font-size: 0.8rem;
+      color: #6b7280;
+      margin-bottom: 8px;
+    }
+    .status.error {
+      color: #b91c1c;
+    }
   </style>
 </head>
 <body>
   <div class="page">
     <h1>テモトル バーコードデータ 月間件数</h1>
+
+    <div id="status" class="status">Firestore からデータ取得中...</div>
 
     <!-- 最新月のバーコードデータ件数 -->
     <div class="card">
@@ -134,28 +151,102 @@
         </tfoot>
       </table>
       <p class="footer-note">
-        ※ データはローカルで手動更新（HTML 内の data 配列に、月別のバーコードデータ件数を入力）しています。
+        ※ Firestore の <code>/users/{userId}/barcodeData</code> から、全件を取得して月別集計しています。<br>
+        ※ セキュリティルールの制約で取得できないドキュメントがある場合は、その分はカウントに含まれません。
       </p>
     </div>
   </div>
 
   <script>
-    // ===== ここだけ編集すればOK：月次バーコードデータ件数 =====
-    // month: "YYYY-MM", count: その月のバーコードデータ件数（例：Firestoreの document 数）
-    const data = [
-      { month: "2025-01", count: 3200 },
-      { month: "2025-02", count: 4100 },
-      { month: "2025-03", count: 3980 },
-      { month: "2025-04", count: 4520 },
-      { month: "2025-05", count: 5010 },
-      { month: "2025-06", count: 4880 }
-      // ↑ 新しい月が出たら末尾に追加してください
-    ];
-    // =========================================
+    // ======== 1. Firebase 初期化（※必ず既存プロジェクトの設定に差し替え） ========
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+      projectId: "YOUR_PROJECT_ID",
+      // 必要に応じて他のパラメータ（storageBucket など）も追加
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
 
-    // 最新月（配列の最後）の情報を表示
-    function renderCurrentMonth() {
-      if (!data.length) return;
+    // ======== 2. ログイン情報（管理用ユーザー） ========
+    // ※ 管理用ユーザーのメールアドレスとパスワードに差し替え
+    const LOGIN_EMAIL = "your-admin@example.com";
+    const LOGIN_PASSWORD = "your-admin-password";
+
+    // ======== 3. 月次集計ロジック ========
+
+    // 日付から "YYYY-MM" を作る
+    function toMonthKey(date) {
+      const y = date.getFullYear();
+      const m = ("0" + (date.getMonth() + 1)).slice(-2);
+      return `${y}-${m}`;
+    }
+
+    // Firestore の timestamp / string / Date に対応して JS Date に変換
+    function toDate(value) {
+      if (!value) return null;
+      // Firestore Timestamp（compat）の場合
+      if (typeof value.toDate === "function") return value.toDate();
+      // JS Date の場合
+      if (value instanceof Date) return value;
+      // ISO文字列など
+      const d = new Date(value);
+      return isNaN(d.getTime()) ? null : d;
+    }
+
+    // /users/{userId}/barcodeData を collectionGroup で全件取得して月次集計
+    async function fetchMonthlyCounts() {
+      const statusEl = document.getElementById("status");
+      try {
+        statusEl.textContent = "ログイン中...";
+
+        // 1) ログイン
+        const cred = await auth.signInWithEmailAndPassword(LOGIN_EMAIL, LOGIN_PASSWORD);
+        const user = cred.user;
+        statusEl.textContent = `ログイン完了（uid: ${user.uid}）。データ取得中...`;
+
+        // 2) collectionGroup で全ユーザーの barcodeData を取得
+        //  セキュリティルールで許可されていない場合はエラーになります。
+        const snap = await db.collectionGroup("barcodeData").get();
+
+        statusEl.textContent = `取得件数：${snap.size} 件。月別に集計中...`;
+
+        const monthlyMap = new Map();
+
+        snap.forEach((doc) => {
+          const data = doc.data();
+          const date = toDate(data.time);
+          if (!date) return; // time 無し／不正はスキップ
+
+          const key = toMonthKey(date);
+          const prev = monthlyMap.get(key) || 0;
+          monthlyMap.set(key, prev + 1);
+        });
+
+        // Map → ソート済み配列に変換
+        // ex: [{ month: "2025-01", count: 123 }, ... ]
+        const monthlyData = Array.from(monthlyMap.entries())
+          .map(([month, count]) => ({ month, count }))
+          .sort((a, b) => a.month.localeCompare(b.month));
+
+        return monthlyData;
+      } catch (err) {
+        console.error(err);
+        statusEl.textContent = "データ取得エラー：" + err.message;
+        statusEl.classList.add("error");
+        throw err;
+      }
+    }
+
+    // ======== 4. 画面レンダリング ========
+
+    function renderCurrentMonth(data) {
+      if (!data || !data.length) {
+        document.getElementById("current-month-name").textContent = "-";
+        document.getElementById("current-month-count").textContent = "-";
+        return;
+      }
       const latest = data[data.length - 1];
       const monthLabel = latest.month.replace("-", "年") + "月";
 
@@ -163,7 +254,6 @@
       document.getElementById("current-month-count").textContent =
         latest.count.toLocaleString();
 
-      // 「最終更新日」はブラウザで開いた日付を表示
       const now = new Date();
       const y = now.getFullYear();
       const m = ("0" + (now.getMonth() + 1)).slice(-2);
@@ -172,8 +262,7 @@
         `最終更新：${y}/${m}/${d}`;
     }
 
-    // 一覧テーブルを表示
-    function renderList() {
+    function renderList(data) {
       const tbody = document.getElementById("list-body");
       tbody.innerHTML = "";
 
@@ -198,8 +287,27 @@
         total.toLocaleString();
     }
 
-    renderCurrentMonth();
-    renderList();
+    // ======== 5. 起動処理 ========
+    (async () => {
+      const statusEl = document.getElementById("status");
+      try {
+        const monthlyData = await fetchMonthlyCounts();
+
+        if (!monthlyData.length) {
+          statusEl.textContent = "有効なバーコードデータが見つかりませんでした。";
+          renderCurrentMonth([]);
+          renderList([]);
+          return;
+        }
+
+        renderCurrentMonth(monthlyData);
+        renderList(monthlyData);
+        statusEl.textContent = "集計完了。";
+      } catch (err) {
+        // ここでは既に fetchMonthlyCounts 内でエラー表示済み
+        console.error("initial load error", err);
+      }
+    })();
   </script>
 </body>
 </html>
